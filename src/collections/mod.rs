@@ -1,3 +1,4 @@
+pub mod colour;
 pub mod point;
 pub mod vector;
 
