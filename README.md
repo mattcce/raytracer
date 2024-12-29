@@ -8,6 +8,9 @@ This project is intended to be a relatively simple way to declaratively create
 3D worlds and generate images (and potentially generate animations) of said
 worlds.
 
+The core foundation of the ray tracer was made with the following reference:
+- J. Buck, _The Ray Tracer Challenge,_ 1st ed., The Pragmatic Programmers, Flower Mound, TX, 2019.
+
 ## Project Status
 
 Far from done. As of writing, the project is very barebones. The remaining core
