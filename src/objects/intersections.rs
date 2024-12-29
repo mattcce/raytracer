@@ -9,18 +9,24 @@ use super::Ray;
 const EPSILON: f64 = 1e-6;
 
 #[derive(Clone, Debug)]
-pub struct RawIntersect<'a> {
+pub struct RawIntersect<'a, S>
+    where
+        S: Shape + ?Sized,
+{
     pub t: f64,
-    pub object: &'a dyn Shape,
+    pub object: &'a S,
     pub ray: &'a Ray,
 }
 
-impl<'a> RawIntersect<'a> {
-    pub fn new(t: f64, object: &'a dyn Shape, ray: &'a Ray) -> RawIntersect<'a> {
+impl<'a, S> RawIntersect<'a, S>
+    where
+        S: Shape + ?Sized,
+{
+    pub fn new(t: f64, object: &'a S, ray: &'a Ray) -> RawIntersect<'a, S> {
         RawIntersect { t, object, ray }
     }
 
-    pub fn precompute(&self) -> ComputedIntersect<'_> {
+    pub fn precompute(&self) -> ComputedIntersect<'_, S> {
         let t = self.t;
         let object = self.object;
         let ray = self.ray;
@@ -50,9 +56,12 @@ impl<'a> RawIntersect<'a> {
 }
 
 #[derive(Clone, Debug)]
-pub struct ComputedIntersect<'a> {
+pub struct ComputedIntersect<'a, S>
+    where
+        S: Shape + ?Sized,
+{
     pub t: f64,
-    pub object: &'a dyn Shape,
+    pub object: &'a S,
     pub ray: &'a Ray,
 
     pub target: Point,
@@ -62,7 +71,10 @@ pub struct ComputedIntersect<'a> {
     pub over_point: Point,
 }
 
-impl ComputedIntersect<'_> {
+impl<S> ComputedIntersect<'_, S>
+    where
+        S: Shape + ?Sized,
+{
     pub fn shade(&self, light: &Light, shadowed: bool) -> Colour {
         light.shade_phong(
             *self.object.material(),
@@ -75,16 +87,21 @@ impl ComputedIntersect<'_> {
 }
 
 #[derive(Clone, Debug)]
-pub struct Intersections<'a>(pub Vec<RawIntersect<'a>>);
+pub struct Intersections<'a, S>(pub Vec<RawIntersect<'a, S>>)
+    where
+        S: Shape + ?Sized;
 
-impl<'a> Intersections<'a> {
-    pub fn new(mut vec: Vec<RawIntersect<'_>>) -> Intersections<'_> {
+impl<'a, S> Intersections<'a, S>
+    where
+        S: Shape + ?Sized,
+{
+    pub fn new(mut vec: Vec<RawIntersect<'_, S>>) -> Intersections<'_, S> {
         assert_ne!(vec.len(), 0);
         vec.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
         Intersections(vec)
     }
 
-    pub fn add_raw_intersect(&mut self, intersect: RawIntersect<'a>) {
+    pub fn add_raw_intersect(&mut self, intersect: RawIntersect<'a, S>) {
         for (i, v) in self.0.iter_mut().enumerate() {
             if intersect.t < v.t {
                 self.0.insert(i, intersect);
@@ -94,31 +111,40 @@ impl<'a> Intersections<'a> {
         self.0.push(intersect);
     }
 
-    pub fn combine_intersections(&mut self, intersections: Intersections<'a>) {
+    pub fn combine_intersections(&mut self, intersections: Intersections<'a, S>) {
         for intersect in intersections.0 {
             self.add_raw_intersect(intersect);
         }
     }
 
-    pub fn hit(&self) -> Option<&RawIntersect<'_>> {
+    pub fn hit(&self) -> Option<&RawIntersect<'_, S>> {
         self.0.iter().find(|&v| v.t >= 0.0)
     }
 }
 
-impl<'a> From<Vec<RawIntersect<'a>>> for Intersections<'a> {
-    fn from(value: Vec<RawIntersect<'a>>) -> Intersections<'a> {
+impl<'a, S> From<Vec<RawIntersect<'a, S>>> for Intersections<'a, S>
+    where
+        S: Shape + ?Sized,
+{
+    fn from(value: Vec<RawIntersect<'a, S>>) -> Intersections<'a, S> {
         Intersections::new(value)
     }
 }
 
-impl Default for Intersections<'_> {
-    fn default() -> Intersections<'static> {
+impl<S> Default for Intersections<'_, S>
+    where
+        S: Shape + ?Sized,
+{
+    fn default() -> Intersections<'static, S> {
         Intersections(vec![])
     }
 }
 
-impl<'a> Index<usize> for Intersections<'a> {
-    type Output = RawIntersect<'a>;
+impl<'a, S> Index<usize> for Intersections<'a, S>
+    where
+        S: Shape + ?Sized,
+{
+    type Output = RawIntersect<'a, S>;
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.0[index]
@@ -145,7 +171,7 @@ mod tests {
         assert_eq!(raw_intersect.t, resulting_intersect.t);
         assert!(std::ptr::eq(
             raw_intersect.object,
-            resulting_intersect.object
+            resulting_intersect.object,
         ));
         assert!(std::ptr::eq(raw_intersect.ray, resulting_intersect.ray));
     }
@@ -159,8 +185,10 @@ mod tests {
         assert_eq!(computed_intersect.target, Point::new(0.0, 0.0, -1.0));
         assert_eq!(computed_intersect.eyev, Vector::new(0.0, 0.0, -1.0));
         assert_eq!(computed_intersect.normal, Vector::new(0.0, 0.0, -1.0));
-        assert_eq!(computed_intersect.over_point, Point::new(0.0, 0.0, -1.0) + Vector::new(0.0, 0.0, -1.0) * EPSILON);
-
+        assert_eq!(
+            computed_intersect.over_point,
+            Point::new(0.0, 0.0, -1.0) + Vector::new(0.0, 0.0, -1.0) * EPSILON
+        );
     }
 
     #[test]
@@ -169,19 +197,10 @@ mod tests {
         let shape = Sphere::default();
         let raw_intersect = RawIntersect::new(1.0, &shape, &ray);
         let computed_intersect = raw_intersect.precompute();
-        assert_eq!(
-            computed_intersect.target,
-            Point::new(0.0, 0.0, 1.0)
-        );
-        assert_eq!(
-            computed_intersect.eyev,
-            Vector::new(0.0, 0.0, -1.0)
-        );
+        assert_eq!(computed_intersect.target, Point::new(0.0, 0.0, 1.0));
+        assert_eq!(computed_intersect.eyev, Vector::new(0.0, 0.0, -1.0));
         assert_eq!(computed_intersect.inside, true);
-        assert_eq!(
-            computed_intersect.normal,
-            Vector::new(0.0, 0.0, -1.0)
-        );
+        assert_eq!(computed_intersect.normal, Vector::new(0.0, 0.0, -1.0));
     }
 
     #[test]

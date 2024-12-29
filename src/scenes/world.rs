@@ -31,7 +31,7 @@ impl World {
         resulting_colour
     }
 
-    pub fn intersect_ray<'a>(&'a self, ray: &'a Ray) -> Intersections {
+    pub fn intersect_ray<'a>(&'a self, ray: &'a Ray) -> Intersections<'a, dyn Shape> {
         self.objects
             .iter()
             .map(|object| object.intersect(ray))
