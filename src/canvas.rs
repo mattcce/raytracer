@@ -86,7 +86,7 @@ impl Canvas {
             _ => (),
         };
 
-        self.pixels[column as usize][row as usize] = Pixel::paint(colour);
+        self.pixels[row as usize][column as usize] = Pixel::paint(colour);
         Ok(())
     }
 }
