@@ -2,8 +2,8 @@ pub mod canvas;
 pub mod world;
 
 // crate-level re-exports
-
-
+pub(crate) use canvas::*;
+pub(crate) use world::*;
 
 // public re-exports (through crate::prelude)
 pub(super) mod prelude {
