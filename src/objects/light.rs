@@ -19,7 +19,7 @@ impl PointLight {
 // This function desperately needs to be refactored; 5 parameters is too many
 // especially when some of the parameters can already be determined from the
 // others and can be computed in the body instead.
-fn lighting(
+pub fn lighting(
     material: Material,
     light: PointLight,
     illuminated_point: Point,

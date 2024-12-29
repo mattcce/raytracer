@@ -5,8 +5,8 @@ use crate::collections::{Point, Vector};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Ray {
-    origin: Point,
-    direction: Vector,
+    pub origin: Point,
+    pub direction: Vector,
 }
 
 impl Ray {
