@@ -1,6 +1,6 @@
 pub mod plane;
 pub mod sphere;
-mod shape;
+pub mod shape;
 
 // crate-level re-exports
 pub(crate) use plane::*;
