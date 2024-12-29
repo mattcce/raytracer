@@ -11,5 +11,6 @@ pub(crate) use world::*;
 pub(super) mod prelude {
     pub use super::canvas;
     pub use super::canvas::Canvas;
+    pub use super::view::{Camera, Orientation};
     pub use super::world::World;
 }

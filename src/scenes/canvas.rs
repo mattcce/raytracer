@@ -1,4 +1,5 @@
 use std::io::Write;
+use std::ops::Index;
 
 use crate::collections::Colour;
 use crate::utils::filehandler;
@@ -11,14 +12,14 @@ pub struct Width(pub usize);
 pub struct Height(pub usize);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-struct Pixel {
+pub struct Pixel {
     red: u64,
     green: u64,
     blue: u64,
 }
 
 impl Pixel {
-    pub fn paint(colour: Colour) -> Pixel {
+    pub fn new(colour: Colour) -> Pixel {
         Pixel {
             red: match colour.red {
                 x if x > 1.0 => PIXEL_MAX,
@@ -62,7 +63,7 @@ impl Canvas {
         for _row in 0..height {
             let mut row_pixels = Vec::with_capacity(width);
             for _column in 0..width {
-                row_pixels.push(Pixel::paint(Colour::new(0.0, 0.0, 0.0)));
+                row_pixels.push(Pixel::new(Colour::new(0.0, 0.0, 0.0)));
             }
             canvas.push(row_pixels);
         }
@@ -85,7 +86,7 @@ impl Canvas {
             _ => (),
         };
 
-        self.pixels[row][column] = Pixel::paint(colour);
+        self.pixels[row][column] = Pixel::new(colour);
         Ok(())
     }
 
@@ -124,6 +125,14 @@ impl Canvas {
     }
 }
 
+impl Index<[usize; 2]> for Canvas {
+    type Output = Pixel;
+
+    fn index(&self, index: [usize; 2]) -> &Self::Output {
+        &self.pixels[index[1]][index[0]]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -138,13 +147,13 @@ mod tests {
             green: 77,
             blue: 191,
         };
-        assert_eq!(Pixel::paint(colour), resulting_pixel)
+        assert_eq!(Pixel::new(colour), resulting_pixel)
     }
 
     #[test]
     fn create_canvas() {
         let canvas = Canvas::new(Width(1), Height(2));
-        let black_pixel = Pixel::paint(Colour::new(0.0, 0.0, 0.0));
+        let black_pixel = Pixel::new(Colour::new(0.0, 0.0, 0.0));
         let resulting_canvas = vec![vec![black_pixel], vec![black_pixel]];
         assert_eq!(
             canvas,
@@ -161,9 +170,9 @@ mod tests {
     #[test]
     fn create_and_paint_canvas() {
         let mut canvas = Canvas::new(Width(2), Height(3));
-        let black_pixel = Pixel::paint(Colour::new(0.0, 0.0, 0.0));
+        let black_pixel = Pixel::new(Colour::new(0.0, 0.0, 0.0));
         let grey_colour = Colour::new(0.5, 0.5, 0.5);
-        let grey_pixel = Pixel::paint(Colour::new(0.5, 0.5, 0.5));
+        let grey_pixel = Pixel::new(Colour::new(0.5, 0.5, 0.5));
         canvas.paint_colour(0, 1, grey_colour).unwrap();
         let resulting_canvas = vec![
             vec![black_pixel, black_pixel],

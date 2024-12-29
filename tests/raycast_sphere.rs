@@ -1,57 +1,114 @@
-// use raytracer::prelude::*;
+use raytracer::prelude::*;
 
-// #[test]
-// #[ignore]
-// fn raycast_sphere() {
-//     // 100x100 pixel canvas with origin (0.0, 0.0, 100.0) parallel to xy-plane
-//     let canvas_width: usize = 100;
-//     let canvas_height: usize = 100;
-//     let mut canvas = Canvas::new(canvas::Width(canvas_width), canvas::Height(canvas_height));
+#[test]
+#[ignore]
+fn raycast_sphere() {
+    let sphere = Sphere::preset();
+    let light = Light::new(Point::new(10.0, 10.0, 10.0), Colour::new(1.0, 1.0, 1.0));
+    let world = World::new(vec![sphere], vec![light]);
+    let camera = Camera::new(
+        100,
+        100,
+        Angle::from_radians(std::f64::consts::FRAC_PI_2),
+        Orientation::new(
+            Point::new(10.0, 10.0, 0.0),
+            Point::new(0.0, 0.0, 0.0),
+            Vector::new(0.0, 0.0, 1.0),
+        ),
+    );
+    camera
+        .render(&world)
+        .unwrap()
+        .output_to_ppm("test_raycast_sphere.ppm")
+        .unwrap();
+}
 
-//     // sphere of radius 10.0 at (50.0, 50.0, 50.0)
-//     let sphere = Sphere {
-//         transform: Transform::from(vec![
-//             TransformKind::Scale(10.0, 10.0, 10.0),
-//             TransformKind::Translate(50.0, 50.0, 50.0),
-//         ]),
-//         material: Material {
-//             colour: Colour::new(1.0, 0.2, 1.0),
-//             ..Material::default()
-//         },
-//     };
-
-//     // white light source at (25.0, 75.0, 25.0)
-//     let light = PointLight::new(Point::new(25.0, 25.0, 25.0), Colour::new(1.0, 1.0, 1.0));
-
-//     // draw pixels by casting a ray and checking for intersects
-//     for x in 0..100 {
-//         for y in 0..100 {
-//             // raycast source at (50.0, 50.0, 0.0)
-//             let ray = Ray::new(
-//                 Point::new(50.0, 50.0, 0.0),
-//                 Vector::new(x as f64 - 50.0, y as f64 - 50.0, 100.0).normalise(),
-//             );
-//             let intersections = ray.intersect(&sphere);
-//             let hit = match intersections.hit() {
-//                 Some(hit) => hit,
-//                 None => continue,
-//             };
-//             let point = ray.position(hit.t());
-//             let normal = hit.object().normal_at(point);
-//             let eye = -ray.direction;
-//             let colour = raytracer::objects::comps::Comps::lighting(
-//                 sphere.material,
-//                 light,
-//                 point,
-//                 eye,
-//                 normal,
-//             );
-//             canvas.paint_colour(x, y, colour).unwrap();
-//         }
-//     }
-
-//     // output canvas
-//     canvas
-//         .output_to_ppm("test_output_raycast_sphere.ppm")
-//         .unwrap();
-// }
+#[test]
+#[ignore]
+fn raycast_scene() {
+    let floor = Sphere::new(
+        Transform::new(TransformKind::Scale(10.0, 0.01, 10.0)),
+        Material {
+            colour: Colour::new(1.0, 0.9, 0.9),
+            specular: 0.0,
+            ..Material::preset()
+        },
+    );
+    let left_wall = Sphere::new(
+        Transform::from(vec![
+            TransformKind::Scale(10.0, 0.01, 10.0),
+            TransformKind::Rotate(Axis::X, Angle::from_radians(std::f64::consts::FRAC_PI_2)),
+            TransformKind::Rotate(Axis::Y, Angle::from_radians(-std::f64::consts::FRAC_PI_4)),
+            TransformKind::Translate(0.0, 0.0, 5.0),
+        ]),
+        Material::preset(),
+    );
+    let right_wall = Sphere::new(
+        Transform::from(vec![
+            TransformKind::Scale(10.0, 0.01, 10.0),
+            TransformKind::Rotate(Axis::X, Angle::from_radians(std::f64::consts::FRAC_PI_2)),
+            TransformKind::Rotate(Axis::Y, Angle::from_radians(std::f64::consts::FRAC_PI_4)),
+            TransformKind::Translate(0.0, 0.0, 5.0),
+        ]),
+        Material::preset(),
+    );
+    let middle_sphere = Sphere::new(
+        Transform::new(TransformKind::Translate(-0.5, 1.0, 0.5)),
+        Material {
+            colour: Colour::new(0.1, 1.0, 0.5),
+            diffuse: 0.7,
+            specular: 0.3,
+            ..Material::preset()
+        },
+    );
+    let right_sphere = Sphere::new(
+        Transform::from(vec![
+            TransformKind::Scale(0.5, 0.5, 0.5),
+            TransformKind::Translate(1.5, 0.5, -0.5),
+        ]),
+        Material {
+            colour: Colour::new(0.1, 1.0, 0.5),
+            diffuse: 0.7,
+            specular: 0.3,
+            ..Material::preset()
+        },
+    );
+    let left_sphere = Sphere::new(
+        Transform::from(vec![
+            TransformKind::Scale(0.33, 0.33, 0.33),
+            TransformKind::Translate(-1.5, 0.33, -0.75),
+        ]),
+        Material {
+            colour: Colour::new(1.0, 0.8, 0.1),
+            diffuse: 0.7,
+            specular: 0.3,
+            ..Material::preset()
+        },
+    );
+    let light_source = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
+    let world = World::new(
+        vec![
+            floor,
+            left_wall,
+            right_wall,
+            middle_sphere,
+            right_sphere,
+            left_sphere,
+        ],
+        vec![light_source],
+    );
+    let camera = Camera::new(
+        100,
+        50,
+        Angle::from_radians(std::f64::consts::FRAC_PI_3),
+        Orientation::new(
+            Point::new(0.0, 1.5, -5.0),
+            Point::new(0.0, 1.0, 0.0),
+            Vector::new(0.0, 1.0, 0.0),
+        ),
+    );
+    let image = camera.render(&world).unwrap();
+    image
+        .output_to_ppm("test_output_raycast_scene.ppm")
+        .unwrap();
+}
