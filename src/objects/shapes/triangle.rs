@@ -11,7 +11,7 @@ pub struct Triangle {
     pub transform: Transform,
     pub material: Material,
     parent: Option<Rc<RefCell<Group>>>,
-    vertices: [Point; 3],
+    pub(crate) vertices: [Point; 3],
     edges: [Vector; 2],
     normal: Vector,
 }

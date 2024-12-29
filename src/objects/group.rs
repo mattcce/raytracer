@@ -5,7 +5,7 @@ use std::rc::{Rc, Weak};
 use crate::collections::{Point, Vector};
 use crate::objects::{Ray, Transform, Transformable};
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Group {
     transform: Transform,
     parent: Option<Rc<RefCell<Group>>>,
