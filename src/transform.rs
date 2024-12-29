@@ -1,4 +1,4 @@
-use crate::collections::{Matrix, Point, Tuple4, Vector};
+use crate::collections::{Matrix, Tuple4};
 use std::ops::Mul;
 
 const IDENTITY: [[f64; 4]; 4] = [
@@ -74,6 +74,7 @@ impl<T: Tuple4 + From<Matrix>> Transformable<T> for T {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::collections::{Point, Vector};
 
     #[test]
     fn create_identity_transform() {
