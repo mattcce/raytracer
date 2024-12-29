@@ -1,8 +1,7 @@
 extern crate raytracer;
 
+use raytracer::canvas;
 use raytracer::collections::*;
-use std::thread;
-use std::time;
 
 struct Scene {
     gravity: Vector,
@@ -25,21 +24,31 @@ impl Scene {
 
 fn main() {
     let projectile1 = Projectile {
-        position: Point::new(0.0, 100.0, 0.0),
-        velocity: Vector::new(10.0, 0.0, 0.0),
+        position: Point::new(0.0, 1.0, 0.0),
+        velocity: Vector::new(1.0, 1.8, 0.0).normalise() * 11.25,
     };
     let mut scene1 = Scene {
-        gravity: Vector::new(0.0, -0.981, 0.0),
-        wind: Vector::new(-0.1, 0.0, 0.0),
+        gravity: Vector::new(0.0, -0.1, 0.0),
+        wind: Vector::new(-0.01, 0.0, 0.0),
         projectile: projectile1,
     };
+    let mut canvas = canvas::Canvas::new(canvas::CanvasSize::new(900, 550));
 
     loop {
-        scene1.tick();
-        println!(
-            "Projectile position: {:?}, velocity: {:?}.",
-            scene1.projectile.position, scene1.projectile.velocity
-        );
-        thread::sleep(time::Duration::from_millis(100));
+        let pos_x = match scene1.projectile.position.x.round() {
+            x if x >= 0.0 => x as u64,
+            _ => break,
+        };
+        let pos_y = match scene1.projectile.position.y.round() {
+            y if y >= 0.0 => 550 - y as u64,
+            _ => break,
+        };
+        if let Err(_) = canvas.paint_colour(pos_x, pos_y, Colour::new(1.0, 0.0, 0.0)) {
+            break;
+        } else {
+            scene1.tick();
+        }
     }
+
+    canvas.output_to_ppm("output.ppm").unwrap();
 }
