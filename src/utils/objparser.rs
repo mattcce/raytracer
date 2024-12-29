@@ -1,7 +1,6 @@
 // use std::cell::RefCell;
 // use std::fs::File;
 // use std::io::Read;
-// use std::rc::Rc;
 
 // use crate::collections::{Point, Vector};
 // use crate::objects::{Group, Material, Transform, Triangle};
@@ -18,10 +17,8 @@
 //     let mut parsed_shapes: Vec<Triangle> = vec![];
 //     let mut parsed_groups = vec![];
 
-//     let default_group = Group::new::<Triangle>(Transform::default(), vec![]);
+//     let default_group = Group::builder();
 //     let mut current_group: Option<Rc<RefCell<Group>>> = None;
-
-//     parsed_groups.push(Rc::clone(&default_group));
 
 //     for line in file_lines {
 //         match line.split(" ").collect::<Vec<&str>>() {
