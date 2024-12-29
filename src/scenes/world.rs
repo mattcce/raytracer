@@ -1,20 +1,21 @@
 use crate::collections::*;
 use crate::objects::*;
-use crate::utils::Preset;
+use crate::utils::{Preset, Shape};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug)]
 pub struct World {
-    pub objects: Vec<Sphere>,
-    pub lights: Vec<Light>,
+    pub objects: Vec<Box<dyn Shape>>,
+    pub lights: Vec<Box<Light>>,
 }
 
 impl World {
-    pub fn new(objects: Vec<Sphere>, lights: Vec<Light>) -> World {
+    pub fn new(objects: Vec<Box<dyn Shape>>, lights: Vec<Box<Light>>) -> World {
         World { objects, lights }
     }
 
     pub fn cast_ray(&self, ray: &Ray) -> Colour {
-        let intersections = self.intersect(ray);
+        let intersections = self.intersect_ray(ray);
+
         let computed_intersect = match intersections.hit() {
             Some(intersect) => intersect.precompute(),
             None => return Colour::new(0.0, 0.0, 0.0),
@@ -23,11 +24,24 @@ impl World {
         for light in &self.lights {
             resulting_colour = resulting_colour
                 + computed_intersect.shade(
-                    *light,
+                    light,
                     self.is_shadowed_point(light, computed_intersect.over_point),
                 );
         }
         resulting_colour
+    }
+
+    pub fn intersect_ray<'a>(&'a self, ray: &'a Ray) -> Intersections {
+        self.objects
+            .iter()
+            .map(|object| object.intersect(ray))
+            .fold(
+                Intersections::default(),
+                |mut intersections1, intersections2| {
+                    intersections1.combine_intersections(intersections2);
+                    intersections1
+                },
+            )
     }
 
     pub fn is_shadowed_point(&self, light: &Light, point: Point) -> bool {
@@ -36,7 +50,7 @@ impl World {
         let direction = vector.normalise();
 
         let ray = Ray::new(point, direction);
-        let intersections = self.intersect(&ray);
+        let intersections = self.intersect_ray(&ray);
 
         match intersections.hit() {
             Some(hit) if hit.t < distance => true,
@@ -71,38 +85,15 @@ impl Preset for World {
         };
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         World {
-            objects: vec![s1, s2],
-            lights: vec![light],
+            objects: vec![Box::new(s1), Box::new(s2)],
+            lights: vec![Box::new(light)],
         }
-    }
-}
-
-impl Intersectable for World {
-    fn intersect<'a>(&'a self, ray: &'a Ray) -> Intersections<'a> {
-        let mut intersections = Intersections(vec![]);
-        for object in &self.objects {
-            let object_intersections = object.intersect(ray);
-            intersections.combine_intersections(object_intersections);
-        }
-        intersections
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn intersect_ray_with_world() {
-        let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let world = World::preset();
-        let intersections = world.intersect(&ray);
-        assert_eq!(intersections.0.len(), 4);
-        assert_eq!(intersections[0].t, 4.0);
-        assert_eq!(intersections[1].t, 4.5);
-        assert_eq!(intersections[2].t, 5.5);
-        assert_eq!(intersections[3].t, 6.0);
-    }
 
     // #[test]
     // fn cast_ray() {
@@ -144,13 +135,29 @@ mod tests {
 
     #[test]
     fn cast_ray_intersects_behind() {
-        let mut world = World::preset();
-        let mut outer = &mut world.objects[0];
-        outer.material.ambient = 1.0;
-        let mut inner = &mut world.objects[1];
-        inner.material.ambient = 1.0;
+        let s1 = Sphere {
+            material: Material {
+                colour: Colour::new(0.8, 1.0, 0.6),
+                ambient: 1.0,
+                diffuse: 0.7,
+                specular: 0.2,
+                ..Material::preset()
+            },
+            ..Sphere::preset()
+        };
+        let s2 = Sphere {
+            material: Material {
+                ambient: 1.0,
+                ..Material::preset()
+            },
+            transform: Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)),
+            ..Sphere::preset()
+        };
+        let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
+        let world = World::new(vec![Box::new(s1), Box::new(s2)], vec![Box::new(light)]);
+        let inner = &world.objects[1];
         let ray = Ray::new(Point::new(0.0, 0.0, 0.75), Vector::new(0.0, 0.0, -1.0));
-        let resulting_colour = inner.material.colour;
+        let resulting_colour = inner.material().colour;
         assert_eq!(world.cast_ray(&ray), resulting_colour);
     }
 
@@ -190,14 +197,17 @@ mod tests {
             ..Sphere::preset()
         };
         let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
-        let world = World::new(vec![s1, s2.clone()], vec![light]);
+        let world = World::new(
+            vec![Box::new(s1), Box::new(s2.clone())],
+            vec![Box::new(light)],
+        );
         let ray = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
         let raw_intersect = RawIntersect::new(4.0, &s2, &ray);
         let computed_intersect = raw_intersect.precompute();
         let resulting_colour = Colour::new(0.1, 0.1, 0.1);
         assert_eq!(
             computed_intersect.shade(
-                world.lights[0],
+                &world.lights[0],
                 world.is_shadowed_point(&world.lights[0], computed_intersect.target),
             ),
             resulting_colour

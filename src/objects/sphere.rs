@@ -1,6 +1,6 @@
 use super::*;
 use crate::collections::{Point, Vector};
-use crate::utils::Preset;
+use crate::utils::{LocallyIntersectable, Preset, Shape};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Sphere {
@@ -15,12 +15,22 @@ impl Sphere {
             material,
         }
     }
+}
 
-    pub fn normal_at(&self, world_point: Point) -> Vector {
+impl Shape for Sphere {
+    fn normal_at(&self, world_point: Point) -> Vector {
         let object_point = world_point.transform(&self.transform.invert());
         let object_normal = object_point - Point::new(0.0, 0.0, 0.0);
         let world_normal = object_normal.transform(&self.transform.invert().transpose());
         world_normal.normalise()
+    }
+
+    fn transformation_matrix(&self) -> &Transform {
+        &self.transform
+    }
+
+    fn material(&self) -> &Material {
+        &self.material
     }
 }
 
@@ -42,25 +52,21 @@ impl Preset for Sphere {
     }
 }
 
-impl Intersectable for Sphere {
-    fn intersect<'a>(&'a self, ray: &'a Ray) -> Intersections<'a> {
-        let transformed_ray = ray.transform(&self.transform.invert());
-        let sphere_to_ray = transformed_ray.origin - Point::zero();
-        let a = transformed_ray.direction.dot(transformed_ray.direction);
-        let b = 2.0 * transformed_ray.direction.dot(sphere_to_ray);
+impl LocallyIntersectable for Sphere {
+    fn local_intersect(&self, local_ray: &Ray) -> Option<Vec<f64>> {
+        let sphere_to_ray = local_ray.origin - Point::zero();
+        let a = local_ray.direction.dot(local_ray.direction);
+        let b = 2.0 * local_ray.direction.dot(sphere_to_ray);
         let c = sphere_to_ray.dot(sphere_to_ray) - 1.0;
         let discriminant = b.powf(2.0) - 4.0 * a * c;
         let sqrt_discriminant = discriminant.sqrt();
 
         if sqrt_discriminant.is_nan() {
-            Intersections::default()
+            None
         } else {
             let t1 = (-b - sqrt_discriminant) / (2.0 * a);
             let t2 = (-b + sqrt_discriminant) / (2.0 * a);
-            Intersections::new(vec![
-                RawIntersect::new(t1, self, ray),
-                RawIntersect::new(t2, self, ray),
-            ])
+            Some(vec![t1, t2])
         }
     }
 }
@@ -153,8 +159,7 @@ mod tests {
         let ray = Ray::new(Point::new(0.0, 2.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let sphere = Sphere::default();
         let intersections = sphere.intersect(&ray);
-        let resulting_intersections = Intersections::default();
-        assert_eq!(intersections, resulting_intersections);
+        assert_eq!(intersections.0.len(), 0);
     }
 
     #[test]
@@ -195,7 +200,6 @@ mod tests {
             ..Sphere::default()
         };
         let intersections = sphere.intersect(&ray);
-        let resulting_intersections = Intersections::default();
-        assert_eq!(intersections, resulting_intersections);
+        assert_eq!(intersections.0.len(), 0);
     }
 }

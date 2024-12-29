@@ -1,5 +1,4 @@
-
-use super::{Intersections};
+use super::Intersections;
 use super::{Transform, Transformable};
 use crate::collections::{Point, Vector};
 
@@ -35,7 +34,6 @@ impl Transformable for Ray {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     #[test]
     fn create_ray() {

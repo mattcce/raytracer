@@ -179,7 +179,9 @@ impl Mul<&Matrix> for Transform {
 }
 
 pub trait Transformable {
-    // transform is consuming because it accepts Tuple4 types which are Copy
+    // transform is consuming because it accepts Tuple4 types which are
+    // Copy - not to be confused with the `transform` field getter for
+    // shapes (to be refactored later)
     fn transform(self, transform: &Transform) -> Self;
 }
 

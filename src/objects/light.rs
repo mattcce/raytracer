@@ -1,6 +1,6 @@
-use super::{Intersectable, Material, Ray};
+use super::Material;
 use crate::collections::{Colour, Point, Vector};
-use crate::scenes::World;
+
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Light {

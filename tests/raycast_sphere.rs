@@ -5,7 +5,7 @@ use raytracer::prelude::*;
 fn raycast_sphere() {
     let sphere = Sphere::preset();
     let light = Light::new(Point::new(10.0, 10.0, 10.0), Colour::new(1.0, 1.0, 1.0));
-    let world = World::new(vec![sphere], vec![light]);
+    let world = World::new(vec![Box::new(sphere)], vec![Box::new(light)]);
     let camera = Camera::new(
         100,
         100,
@@ -88,14 +88,14 @@ fn raycast_scene() {
     let light_source = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
     let world = World::new(
         vec![
-            floor,
-            left_wall,
-            right_wall,
-            middle_sphere,
-            right_sphere,
-            left_sphere,
+            Box::new(floor),
+            Box::new(left_wall),
+            Box::new(right_wall),
+            Box::new(middle_sphere),
+            Box::new(right_sphere),
+            Box::new(left_sphere),
         ],
-        vec![light_source],
+        vec![Box::new(light_source)],
     );
     let camera = Camera::new(
         100,

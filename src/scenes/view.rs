@@ -120,7 +120,7 @@ impl Camera {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::f64::consts::{FRAC_PI_2, FRAC_PI_4};
+    use std::f64::consts::FRAC_PI_2;
 
     #[test]
     fn view_transform_default() {
@@ -228,6 +228,8 @@ mod tests {
     //     assert_eq!(camera.map_ray(0, 0), resulting_ray);
     // }
 
+    // use std::f64::consts::FRAC_PI_2;
+    //
     // #[test]
     // fn ray_with_transformed_camera() {
     //     let transform = Transform::from(vec![
