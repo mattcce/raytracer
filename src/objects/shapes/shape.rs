@@ -7,7 +7,32 @@ use crate::objects::*;
 pub enum Shape {
     Primitive(Box<dyn PrimitiveShape>),
     Group(Group),
-    // CSG(Box<CSG>),
+    Csg(Csg),
+}
+
+impl Shape {
+    // eventually make this function delegate to underlying object by calling a single method
+    pub fn contains<'a, 'b: 'a>(&'a self, primitive_shape: &'b dyn PrimitiveShape) -> bool {
+        match self {
+            Shape::Primitive(shape) => {
+                // For some reason, PartialEq does not work here when comparing references directly IF we remove `+ '_` from impl PartialEq for dyn PrimitiveShape + 'a.
+                shape.as_ref() == primitive_shape
+            }
+            Shape::Group(group) => {
+                match group
+                    .objects()
+                    .iter()
+                    .position(|object| object.contains(primitive_shape))
+                {
+                    Some(_) => true,
+                    None => false,
+                }
+            }
+            Shape::Csg(csg) => {
+                csg.lshape().contains(primitive_shape) || csg.rshape().contains(primitive_shape)
+            }
+        }
+    }
 }
 
 impl Intersectable<dyn PrimitiveShape> for Shape {
@@ -23,6 +48,7 @@ impl Intersectable<dyn PrimitiveShape> for Shape {
         match self {
             Shape::Primitive(primitive) => primitive.intersect_ray(world_ray, transform_stack),
             Shape::Group(group) => group.intersect_ray(world_ray, transform_stack),
+            Shape::Csg(csg) => csg.intersect_ray(world_ray, transform_stack),
         }
     }
 }
@@ -32,6 +58,7 @@ impl Bounded for Shape {
         match self {
             Shape::Primitive(s) => s.bounds(),
             Shape::Group(s) => s.bounds(),
+            Shape::Csg(s) => s.bounds(),
         }
     }
 }
@@ -55,7 +82,7 @@ pub trait PrimitiveShape: Debug + Bounded {
     fn local_intersect(&self, local_ray: &Ray) -> Vec<Coordinates>;
 }
 
-impl PartialEq for dyn PrimitiveShape {
+impl PartialEq for dyn PrimitiveShape + '_ {
     fn eq(&self, other: &Self) -> bool {
         format!("{:?}", self) == format!("{:?}", other)
     }

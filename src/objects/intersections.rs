@@ -312,6 +312,11 @@ where
         }
     }
 
+    pub fn expose(mut self) -> Vec<Intersect<'ray, S, Raw>> {
+        self.sort_intersections_by_t();
+        self.0
+    }
+
     fn sort_intersections_by_t(&mut self) {
         self.0.sort_by(|a, b| a.t().partial_cmp(&b.t()).unwrap());
     }
@@ -352,7 +357,7 @@ where
     {
         match in_objects
             .iter()
-            .position(|&object| object == current_intersect.object)
+            .position(|&object| object == current_intersect.object())
         {
             Some(idx_object) => {
                 in_objects.remove(idx_object);

@@ -1,4 +1,5 @@
 pub mod bounds;
+pub mod csg;
 pub mod group;
 pub mod intersections;
 pub mod light;
@@ -10,6 +11,7 @@ pub mod transform;
 
 // crate-level re-exports
 pub(crate) use bounds::*;
+pub(crate) use csg::*;
 pub(crate) use group::*;
 pub(crate) use intersections::*;
 pub(crate) use light::*;
