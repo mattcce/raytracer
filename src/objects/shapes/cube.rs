@@ -11,9 +11,16 @@ pub struct Cube {
 }
 
 impl Cube {
+    pub fn new(transform: Transform, material: Material) -> Self {
+        Cube {
+            transform,
+            material,
+        }
+    }
+
     fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
-        let tmin_numerator = (-1.0 - origin);
-        let tmax_numerator = (1.0 - origin);
+        let tmin_numerator = -1.0 - origin;
+        let tmax_numerator = 1.0 - origin;
 
         let tmin;
         let tmax;
@@ -68,7 +75,7 @@ impl Shape for Cube {
         }
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Option<Vec<f64>> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
         let (xtmin, xtmax) = Cube::check_axis(local_ray.origin.x, local_ray.direction.x);
         let (ytmin, ytmax) = Cube::check_axis(local_ray.origin.y, local_ray.direction.y);
         let (ztmin, ztmax) = Cube::check_axis(local_ray.origin.z, local_ray.direction.z);
@@ -77,9 +84,9 @@ impl Shape for Cube {
         let tmax = [xtmax, ytmax, ztmax].into_iter().reduce(f64::min).unwrap();
 
         if tmin > tmax {
-            None
+            vec![]
         } else {
-            Some(vec![tmin, tmax])
+            vec![tmin, tmax]
         }
     }
 }
@@ -138,7 +145,7 @@ mod tests {
         ];
         for (origin, direction, t1, t2) in test_cases {
             let ray = Ray::new(origin, direction);
-            let t_values = cube.local_intersect(&ray).unwrap();
+            let t_values = cube.local_intersect(&ray);
             assert_eq!(t_values.len(), 2);
             assert_eq!(t_values[0], t1);
             assert_eq!(t_values[1], t2);
@@ -167,7 +174,7 @@ mod tests {
         ];
         for (origin, direction) in test_cases {
             let ray = Ray::new(origin, direction);
-            assert!(cube.local_intersect(&ray).is_none());
+            assert_eq!(cube.local_intersect(&ray).len(), 0);
         }
     }
 

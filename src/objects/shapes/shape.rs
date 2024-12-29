@@ -19,7 +19,7 @@ pub trait Shape: Debug {
     fn transformation_matrix(&self) -> &Transform;
     fn transformation_matrix_mut(&mut self) -> &mut Transform;
     fn local_normal_at(&self, local_point: Point) -> Vector;
-    fn local_intersect(&self, local_ray: &Ray) -> Option<Vec<f64>>;
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64>;
 }
 
 impl PartialEq for dyn Shape {
@@ -32,8 +32,8 @@ impl<S: Shape + ?Sized> Intersectable for S {
     fn intersect<'a>(&'a self, world_ray: &'a Ray) -> Intersections<'a, Self> {
         let local_ray = world_ray.transform(&self.transformation_matrix().invert());
         match self.local_intersect(&local_ray) {
-            None => Intersections::default(),
-            Some(intersects) => intersects
+            t_values if t_values.len() == 0 => Intersections::default(),
+            t_values => t_values
                 .into_iter()
                 .map(|t| RawIntersect::new(t, self, world_ray))
                 .collect::<Vec<RawIntersect<S>>>()

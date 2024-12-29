@@ -9,7 +9,7 @@ pub struct Gradient {
 }
 
 impl Gradient {
-    fn new(colour1: Colour, colour2: Colour, transform: Transform) -> Gradient {
+    pub fn new(colour1: Colour, colour2: Colour, transform: Transform) -> Gradient {
         Gradient {
             colour1,
             colour2,

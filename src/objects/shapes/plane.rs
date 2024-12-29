@@ -40,13 +40,13 @@ impl Shape for Plane {
         Vector::new(0.0, 1.0, 0.0)
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Option<Vec<f64>> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
         if local_ray.direction.y.abs() < EPSILON {
-            return None;
+            return vec![];
         }
 
         let t = -local_ray.origin.y / local_ray.direction.y;
-        Some(vec![t])
+        vec![t]
     }
 }
 

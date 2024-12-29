@@ -38,7 +38,7 @@ impl Shape for Sphere {
         local_point - Point::new(0.0, 0.0, 0.0)
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Option<Vec<f64>> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
         let sphere_to_ray = local_ray.origin - Point::zero();
         let a = local_ray.direction.dot(local_ray.direction);
         let b = 2.0 * local_ray.direction.dot(sphere_to_ray);
@@ -47,11 +47,11 @@ impl Shape for Sphere {
         let sqrt_discriminant = discriminant.sqrt();
 
         if sqrt_discriminant.is_nan() {
-            None
+            vec![]
         } else {
             let t1 = (-b - sqrt_discriminant) / (2.0 * a);
             let t2 = (-b + sqrt_discriminant) / (2.0 * a);
-            Some(vec![t1, t2])
+            vec![t1, t2]
         }
     }
 }

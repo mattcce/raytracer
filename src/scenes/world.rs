@@ -146,8 +146,7 @@ impl World {
             .iter()
             .position(|raw_intersect| raw_intersect.t == computed_intersect.t)
             .unwrap();
-        let refraction_boundary = refraction_boundaries[idx_intersect];
-        refraction_boundary
+        refraction_boundaries[idx_intersect]
     }
 }
 
