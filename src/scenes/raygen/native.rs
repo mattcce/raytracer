@@ -1,5 +1,6 @@
 use crate::collections::{Angle, Point};
 use crate::objects::{Ray, Transform, Transformable};
+use crate::scenes::raygen;
 use crate::scenes::raygen::{RayGenerator, TaggedPixel, TaggedRay};
 use crate::scenes::Orientation;
 
@@ -113,16 +114,23 @@ impl Iterator for NativeIterator {
     fn next(&mut self) -> Option<Self::Item> {
         match self.pixel_iterator.next() {
             Some((pos_x, pos_y)) => {
-                let offset_x = (pos_x as f64 + 0.5) * self.native.pixel_size();
-                let offset_y = (pos_y as f64 + 0.5) * self.native.pixel_size();
-                let world_x = self.native.half_width() - offset_x;
-                let world_y = self.native.half_height() - offset_y;
-                let inverse_transform = self.native.frame_transformation().invert();
-                let pixel = Point::new(world_x, world_y, -1.0).transform(&inverse_transform);
-                let origin = Point::new(0.0, 0.0, 0.0).transform(&inverse_transform);
-                let direction = (pixel - origin).normalise();
-                let ray = Ray::new(origin, direction);
+                let (offset_x, offset_y) = raygen::pixel_offset_from_centre_target(
+                    pos_x,
+                    pos_y,
+                    self.native.pixel_size(),
+                    self.native.half_width(),
+                    self.native.half_height(),
+                );
+                let ray = raygen::generate_normalised_ray(
+                    Point::zero(),
+                    Point::new(offset_x, offset_y, -1.0),
+                    &self.native.frame_transformation().invert(),
+                );
+
+                // tag pixel
                 let tagged_pixel = TaggedPixel::new([pos_x, pos_y], 1.0);
+
+                // tag ray
                 let tagged_ray = TaggedRay::new(ray, vec![tagged_pixel]);
                 Some(tagged_ray)
             }
@@ -168,8 +176,7 @@ mod tests {
             Angle::from_radians(FRAC_PI_2),
             Orientation::default(),
         );
-        let tagged_ray = native.into_iter().skip(101 * 100 + 50).next().unwrap(); // next ray for pixel [100, 50]
-        println!("{:?}", tagged_ray.pixels());
+        let tagged_ray = native.into_iter().skip(101 * 100 + 50).next().unwrap(); // ray for pixel [100, 50]
         let casted_ray = tagged_ray.ray();
         let resulting_ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, -1.0));
         approx_eq!(casted_ray.origin.x, resulting_ray.origin.x);

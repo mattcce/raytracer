@@ -8,5 +8,6 @@ pub(crate) use native::*;
 pub(crate) use raygen::*;
 
 pub(super) mod prelude {
+    pub use super::agss::Agss;
     pub use super::native::Native;
 }

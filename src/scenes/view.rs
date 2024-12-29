@@ -1,8 +1,6 @@
 use crate::collections::{Matrix, Point, Vector};
 use crate::objects::*;
-use crate::scenes::{
-    Canvas, Height, RayGenerator, TaggedPixel, TaggedRay, Width, World, WriteError,
-};
+use crate::scenes::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Orientation(pub Transform);
@@ -57,9 +55,7 @@ pub struct Camera<R: RayGenerator> {
 
 impl<R: RayGenerator> Camera<R> {
     pub fn new(ray_generator: R) -> Camera<R> {
-        Camera {
-            ray_generator: ray_generator,
-        }
+        Camera { ray_generator }
     }
 
     pub fn render(self, world: &World) -> Result<Canvas, WriteError> {
@@ -71,7 +67,8 @@ impl<R: RayGenerator> Camera<R> {
             let tagged_pixels = tagged_ray.pixels();
             for tagged_pixel in tagged_pixels {
                 let [pos_x, pos_y] = tagged_pixel.index();
-                image.paint_colour(pos_x, pos_y, colour)?;
+                let blend_weight = tagged_pixel.blend_weight();
+                image.paint_colour_additive(pos_x, pos_y, colour * blend_weight)?;
             }
         }
         Ok(image)
@@ -83,7 +80,6 @@ mod tests {
     use std::f64::consts::FRAC_PI_2;
 
     use crate::collections::*;
-    use crate::scenes::*;
     use crate::utils::{approx_eq, BuildInto, Buildable};
 
     use super::*;
@@ -175,9 +171,10 @@ mod tests {
         );
         let camera = Camera::new(native_ray_generator);
         let image = camera.render(&world).unwrap();
-        assert_eq!(
-            image[[5, 5]],
-            Pixel::new(Colour::new(0.38066, 0.47583, 0.2855))
-        );
+        let painted_pixel = image[[5, 5]];
+        let resulting_pixel = Pixel::new(Colour::new(0.38066, 0.47583, 0.2855));
+        assert_eq!(painted_pixel.red(), resulting_pixel.red());
+        assert_eq!(painted_pixel.green(), resulting_pixel.green());
+        assert_eq!(painted_pixel.blue(), resulting_pixel.blue());
     }
 }

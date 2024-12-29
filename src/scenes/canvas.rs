@@ -1,5 +1,5 @@
 use std::io::Write;
-use std::ops::Index;
+use std::ops::{Add, AddAssign, Index};
 
 use crate::collections::Colour;
 use crate::utils::filehandler;
@@ -13,30 +13,52 @@ pub struct Height(pub usize);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Pixel {
-    red: u64,
-    green: u64,
-    blue: u64,
+    colour: Colour,
 }
 
 impl Pixel {
     pub fn new(colour: Colour) -> Pixel {
-        Pixel {
-            red: match colour.red {
-                x if x > 1.0 => PIXEL_MAX,
-                x if x < 0.0 => 0,
-                x => (x * PIXEL_MAX as f64).round() as u64,
-            },
-            green: match colour.green {
-                x if x > 1.0 => PIXEL_MAX,
-                x if x < 0.0 => 0,
-                x => (x * PIXEL_MAX as f64).round() as u64,
-            },
-            blue: match colour.blue {
-                x if x > 1.0 => PIXEL_MAX,
-                x if x < 0.0 => 0,
-                x => (x * PIXEL_MAX as f64).round() as u64,
-            },
+        Pixel { colour }
+    }
+
+    pub fn red(&self) -> u64 {
+        match self.colour.red {
+            x if x > 1.0 => PIXEL_MAX,
+            x if x < 0.0 => 0,
+            x => (x * PIXEL_MAX as f64).round() as u64,
         }
+    }
+
+    pub fn green(&self) -> u64 {
+        match self.colour.green {
+            x if x > 1.0 => PIXEL_MAX,
+            x if x < 0.0 => 0,
+            x => (x * PIXEL_MAX as f64).round() as u64,
+        }
+    }
+
+    pub fn blue(&self) -> u64 {
+        match self.colour.blue {
+            x if x > 1.0 => PIXEL_MAX,
+            x if x < 0.0 => 0,
+            x => (x * PIXEL_MAX as f64).round() as u64,
+        }
+    }
+}
+
+impl Add for Pixel {
+    type Output = Pixel;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Pixel {
+            colour: self.colour + rhs.colour,
+        }
+    }
+}
+
+impl AddAssign for Pixel {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = self.add(rhs);
     }
 }
 
@@ -73,7 +95,7 @@ impl Canvas {
         }
     }
 
-    pub fn paint_colour(
+    pub fn paint_colour_replace(
         &mut self,
         column: usize,
         row: usize,
@@ -90,6 +112,23 @@ impl Canvas {
         Ok(())
     }
 
+    pub fn paint_colour_additive(
+        &mut self,
+        column: usize,
+        row: usize,
+        colour: Colour,
+    ) -> Result<(), WriteError> {
+        match (column, row) {
+            (column, row) if column > self.size.width || row > self.size.height => {
+                return Err(WriteError::OutOfBounds)
+            }
+            _ => (),
+        };
+
+        self.pixels[row][column] += Pixel::new(colour);
+        Ok(())
+    }
+
     pub fn write_to_ppm(&self) -> Result<Vec<u8>, std::io::Error> {
         let mut buffer = Vec::new();
         writeln!(&mut buffer, "{}", PPM_HEADER)?;
@@ -98,7 +137,7 @@ impl Canvas {
         for row in &self.pixels {
             let mut row_buffer = String::new();
             for pixel in row {
-                let colour_values: Vec<String> = vec![pixel.red, pixel.green, pixel.blue]
+                let colour_values: Vec<String> = vec![pixel.red(), pixel.green(), pixel.blue()]
                     .iter()
                     .map(|cval| cval.to_string())
                     .collect();
@@ -141,17 +180,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn create_pixel() {
-        let colour = Colour::new(0.25, 0.3, 0.75);
-        let resulting_pixel = Pixel {
-            red: 64,
-            green: 77,
-            blue: 191,
-        };
-        assert_eq!(Pixel::new(colour), resulting_pixel)
-    }
-
-    #[test]
     fn create_canvas() {
         let canvas = Canvas::new(Width(1), Height(2));
         let black_pixel = Pixel::new(Colour::new(0.0, 0.0, 0.0));
@@ -174,7 +202,7 @@ mod tests {
         let black_pixel = Pixel::new(Colour::new(0.0, 0.0, 0.0));
         let grey_colour = Colour::new(0.5, 0.5, 0.5);
         let grey_pixel = Pixel::new(Colour::new(0.5, 0.5, 0.5));
-        canvas.paint_colour(0, 1, grey_colour).unwrap();
+        canvas.paint_colour_additive(0, 1, grey_colour).unwrap();
         let resulting_canvas = vec![
             vec![black_pixel, black_pixel],
             vec![grey_pixel, black_pixel],
@@ -196,10 +224,10 @@ mod tests {
     fn write_ppm_small_canvas() {
         let mut canvas = Canvas::new(Width(2), Height(2));
         canvas
-            .paint_colour(0, 0, Colour::new(1.0, 1.0, 1.0))
+            .paint_colour_additive(0, 0, Colour::new(1.0, 1.0, 1.0))
             .unwrap();
         canvas
-            .paint_colour(1, 1, Colour::new(0.5, 0.5, 0.5))
+            .paint_colour_additive(1, 1, Colour::new(0.5, 0.5, 0.5))
             .unwrap();
         let output_buffer = b"P3\n2 2\n255\n255 255 255 0 0 0\n0 0 0 128 128 128\n".to_vec();
         let written_buffer = canvas.write_to_ppm().unwrap();
@@ -211,7 +239,7 @@ mod tests {
         let mut canvas = Canvas::new(Width(10), Height(2));
         for pixel in 0..10 {
             canvas
-                .paint_colour(pixel, 0, Colour::new(1.0, 1.0, 1.0))
+                .paint_colour_additive(pixel, 0, Colour::new(1.0, 1.0, 1.0))
                 .unwrap();
         }
         let output_buffer = b"P3\n10 2\n255\n255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255\n255 255 255 255 255 255 255 255 255 255 255 255 255\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n".to_vec();
@@ -224,10 +252,10 @@ mod tests {
     fn output_canvas_to_ppm() {
         let mut canvas = Canvas::new(Width(2), Height(2));
         canvas
-            .paint_colour(0, 0, Colour::new(1.0, 1.0, 1.0))
+            .paint_colour_additive(0, 0, Colour::new(1.0, 1.0, 1.0))
             .unwrap();
         canvas
-            .paint_colour(1, 1, Colour::new(0.5, 0.5, 0.5))
+            .paint_colour_additive(1, 1, Colour::new(0.5, 0.5, 0.5))
             .unwrap();
         let output_buffer = b"P3\n2 2\n255\n255 255 255 0 0 0\n0 0 0 128 128 128\n".to_vec();
 

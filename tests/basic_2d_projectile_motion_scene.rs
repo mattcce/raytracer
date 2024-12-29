@@ -13,7 +13,7 @@ struct Projectile {
 
 impl Scene {
     fn tick(&mut self) {
-        let mut projectile = &mut self.projectile;
+        let projectile = &mut self.projectile;
         projectile.position = projectile.position + projectile.velocity;
         projectile.velocity = projectile.velocity + self.gravity + self.wind;
     }
@@ -43,7 +43,7 @@ fn basic_2d_projectile_motion_scene() {
             _ => break,
         };
         if canvas
-            .paint_colour(pos_x, pos_y, Colour::new(1.0, 0.0, 0.0))
+            .paint_colour_additive(pos_x, pos_y, Colour::new(1.0, 0.0, 0.0))
             .is_err()
         {
             break;
@@ -52,5 +52,7 @@ fn basic_2d_projectile_motion_scene() {
         }
     }
 
-    canvas.output_to_ppm("test_output_projmotion.ppm").unwrap();
+    canvas
+        .output_to_ppm("resources/test_outputs/test_output_projmotion.ppm")
+        .unwrap();
 }
