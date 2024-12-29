@@ -127,7 +127,7 @@ mod tests {
 
     #[test]
     fn mul_scalar_by_vector() {
-        let scalar = 2.0f64;
+        let scalar = 2.0_f64;
         let vector = Vector::new(5.0, 5.0, 7.0);
         let resulting_vector = Vector::new(10.0, 10.0, 14.0);
         assert_eq!(scalar * vector, resulting_vector);
@@ -136,7 +136,7 @@ mod tests {
     #[test]
     fn mul_vector_by_scalar() {
         let vector = Vector::new(3.0, 1.0, 7.0);
-        let scalar = 3.0f64;
+        let scalar = 3.0_f64;
         let resulting_vector = Vector::new(9.0, 3.0, 21.0);
         assert_eq!(vector * scalar, resulting_vector);
     }
@@ -144,7 +144,7 @@ mod tests {
     #[test]
     fn div_vector_by_scalar() {
         let vector = Vector::new(3.0, 6.0, 9.0);
-        let scalar = 3.0f64;
+        let scalar = 3.0_f64;
         let resulting_vector = Vector::new(1.0, 2.0, 3.0);
         assert_eq!(vector / scalar, resulting_vector);
     }
