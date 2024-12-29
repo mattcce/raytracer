@@ -63,4 +63,8 @@ pub mod prelude {
 
     Modules outside of this parent module should bring names into scope using
         `use crate::module::Name`.
+
+    Test modules should always bring names that only it needs into scope using
+        `use crate::...`
+    to avoid having to write `use super::super::...`.
 */
