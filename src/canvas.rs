@@ -1,6 +1,9 @@
-use crate::collections::Colour;
+use std::io::Write;
 
-const PPM_HEADER: &str = "P3\n";
+use crate::collections::Colour;
+use crate::utils::filehandler;
+
+const PPM_HEADER: &str = "P3";
 const PIXEL_MAX: u64 = 255;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -89,11 +92,47 @@ impl Canvas {
         self.pixels[row as usize][column as usize] = Pixel::paint(colour);
         Ok(())
     }
+
+    pub fn write_to_ppm(&self) -> Result<Vec<u8>, std::io::Error> {
+        let mut buffer = Vec::new();
+        writeln!(&mut buffer, "{}", PPM_HEADER)?;
+        writeln!(&mut buffer, "{} {}", self.size.width, self.size.height)?;
+        writeln!(&mut buffer, "{}", PIXEL_MAX)?;
+        for row in &self.pixels {
+            let mut row_buffer = String::new();
+            for pixel in row {
+                let colour_values: Vec<String> = vec![pixel.red, pixel.green, pixel.blue]
+                    .iter()
+                    .map(|cval| cval.to_string())
+                    .collect();
+                for colour_value in colour_values {
+                    if row_buffer.len() + colour_value.len() + 1 > 70 {
+                        writeln!(buffer, "{}", row_buffer.trim())?;
+                        row_buffer = String::new();
+                    }
+                    row_buffer.push_str(&colour_value[..]);
+                    row_buffer.push_str(" ");
+                }
+            }
+            writeln!(buffer, "{}", row_buffer.trim())?;
+        }
+        Ok(buffer)
+    }
+
+    pub fn output_to_ppm(&self, output_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let buffer = self.write_to_ppm()?;
+
+        filehandler::write_to_file(&buffer, output_path)?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs::File;
+    use std::io::prelude::*;
 
     #[test]
     fn create_pixel() {
@@ -123,15 +162,16 @@ mod tests {
 
     #[test]
     fn create_and_paint_canvas() {
-        let size = CanvasSize::new(2, 2);
+        let size = CanvasSize::new(2, 3);
         let mut canvas = Canvas::new(size);
         let black_pixel = Pixel::paint(Colour::new(0.0, 0.0, 0.0));
         let grey_colour = Colour::new(0.5, 0.5, 0.5);
         let grey_pixel = Pixel::paint(Colour::new(0.5, 0.5, 0.5));
-        canvas.paint_colour(1, 1, grey_colour).unwrap();
+        canvas.paint_colour(0, 1, grey_colour).unwrap();
         let resulting_canvas = vec![
             vec![black_pixel, black_pixel],
-            vec![black_pixel, grey_pixel],
+            vec![grey_pixel, black_pixel],
+            vec![black_pixel, black_pixel],
         ];
         assert_eq!(
             canvas,
@@ -140,5 +180,57 @@ mod tests {
                 pixels: resulting_canvas,
             }
         );
+    }
+
+    #[test]
+    fn write_ppm_small_canvas() {
+        let mut canvas = Canvas::new(CanvasSize::new(2, 2));
+        canvas
+            .paint_colour(0, 0, Colour::new(1.0, 1.0, 1.0))
+            .unwrap();
+        canvas
+            .paint_colour(1, 1, Colour::new(0.5, 0.5, 0.5))
+            .unwrap();
+        let output_buffer = b"P3\n2 2\n255\n255 255 255 0 0 0\n0 0 0 128 128 128\n".to_vec();
+        let written_buffer = canvas.write_to_ppm().unwrap();
+        assert_eq!(written_buffer, output_buffer);
+    }
+
+    #[test]
+    fn write_ppm_large_canvas() {
+        let mut canvas = Canvas::new(CanvasSize::new(10, 2));
+        for pixel in 0..10 {
+            canvas
+                .paint_colour(pixel, 0, Colour::new(1.0, 1.0, 1.0))
+                .unwrap();
+        }
+        let output_buffer = b"P3\n10 2\n255\n255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255\n255 255 255 255 255 255 255 255 255 255 255 255 255\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n".to_vec();
+        let written_buffer = canvas.write_to_ppm().unwrap();
+        assert_eq!(written_buffer, output_buffer);
+    }
+
+    #[test]
+    fn output_canvas_to_ppm() {
+        let mut canvas = Canvas::new(CanvasSize::new(2, 2));
+        canvas
+            .paint_colour(0, 0, Colour::new(1.0, 1.0, 1.0))
+            .unwrap();
+        canvas
+            .paint_colour(1, 1, Colour::new(0.5, 0.5, 0.5))
+            .unwrap();
+        let output_buffer = b"P3\n2 2\n255\n255 255 255 0 0 0\n0 0 0 128 128 128\n".to_vec();
+
+        canvas.output_to_ppm("output.ppm").unwrap();
+
+        let mut read_buffer = Vec::new();
+        File::open("output.ppm")
+            .unwrap()
+            .read_to_end(&mut read_buffer)
+            .unwrap();
+
+        assert_eq!(read_buffer, output_buffer);
+
+        // cleanup
+        std::fs::remove_file("output.ppm").unwrap();
     }
 }
