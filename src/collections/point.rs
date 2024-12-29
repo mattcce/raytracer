@@ -3,9 +3,9 @@ use std::ops::{Add, Neg, Sub};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Point {
-    pub(super) x: f64,
-    pub(super) y: f64,
-    pub(super) z: f64,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 impl Point {
