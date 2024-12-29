@@ -90,6 +90,19 @@ impl<T: Tuple4> From<T> for Matrix {
     }
 }
 
+impl Matrix {
+    pub fn transpose(&self) -> Matrix {
+        let (tm_rows, tm_cols) = (self.cols, self.rows);
+        let mut transposed_matrix = Matrix::new(tm_rows, tm_cols);
+        for i in 0..tm_rows {
+            for j in 0..tm_cols {
+                transposed_matrix[[i, j]] = self[[j, i]];
+            }
+        }
+        transposed_matrix
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -188,5 +201,22 @@ mod tests {
             matrix: vec![vec![6.0], vec![4.0], vec![2.0], vec![0.0]],
         };
         assert_eq!(Matrix::from(vector), matrix);
+    }
+
+    #[test]
+    fn transpose_matrix() {
+        let matrix = Matrix::from(&vec![
+            vec![0.0, 9.0, 3.0, 0.0],
+            vec![9.0, 8.0, 0.0, 8.0],
+            vec![1.0, 8.0, 5.0, 3.0],
+            vec![0.0, 0.0, 5.0, 8.0],
+        ]);
+        let resulting_matrix = Matrix::from(&vec![
+            vec![0.0, 9.0, 1.0, 0.0],
+            vec![9.0, 8.0, 8.0, 0.0],
+            vec![3.0, 0.0, 5.0, 5.0],
+            vec![0.0, 8.0, 3.0, 8.0],
+        ]);
+        assert_eq!(matrix.transpose(), resulting_matrix);
     }
 }
