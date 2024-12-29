@@ -54,6 +54,10 @@ impl Transform {
         Transform(self.0.invert())
     }
 
+    pub fn transpose(&self) -> Transform {
+        Transform(self.0.transpose())
+    }
+
     // transform_a.compose(transform_b) applies transform_a first then transform_b
     // Mul trait not implemented due to potential confusion on the order of application
     pub fn compose(&self, other: &Transform) -> Transform {

@@ -122,8 +122,7 @@ mod tests {
     #[test]
     fn ray_intersects_transformed_sphere() {
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let mut sphere = Sphere::new();
-        sphere.set_transform(&Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)));
+        let sphere = Sphere::from(&Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)));
         let intersections = ray.intersect(&sphere).unwrap();
         assert_eq!(intersections[0].t(), 3.0);
         assert_eq!(intersections[1].t(), 7.0);
@@ -132,8 +131,7 @@ mod tests {
     #[test]
     fn ray_does_not_intersect_transformed_sphere() {
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let mut sphere = Sphere::new();
-        sphere.set_transform(&Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)));
+        let sphere = Sphere::from(&Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)));
         let intersections = ray.intersect(&sphere);
         assert_eq!(intersections, None);
     }

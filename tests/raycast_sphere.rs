@@ -8,8 +8,7 @@ use raytracer::transform::{Transform, TransformKind};
 #[ignore]
 fn raycast_sphere() {
     // draw a sphere of radius 5.0 at (10.0, 10.0, 0.0)
-    let mut sphere = Sphere::new();
-    sphere.set_transform(&Transform::from(vec![
+    let sphere = Sphere::from(&Transform::from(vec![
         TransformKind::Scale(5.0, 5.0, 5.0),
         TransformKind::Translate(10.0, 10.0, 0.0),
     ]));
