@@ -39,8 +39,13 @@ fn raycast_sphere() {
             let point = ray.position(hit.t());
             let normal = hit.object().normal_at(point);
             let eye = -ray.direction;
-            let colour =
-                raytracer::objects::light::lighting(sphere.material, light, point, eye, normal);
+            let colour = raytracer::objects::comps::Comps::lighting(
+                sphere.material,
+                light,
+                point,
+                eye,
+                normal,
+            );
             canvas.paint_colour(x, y, colour).unwrap();
         }
     }

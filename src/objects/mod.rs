@@ -1,4 +1,4 @@
-pub(crate) mod comps;
+pub mod comps;
 pub mod intersections;
 pub mod light;
 pub mod material;
