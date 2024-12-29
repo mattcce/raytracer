@@ -1,5 +1,8 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, Transform};
+use crate::objects::{
+    BoundingBox, Bounds, Coordinates, Material, PrimitiveShape, Ray, Shape, Transform,
+    Transformable,
+};
 use crate::utils::floats::EPSILON;
 use crate::utils::{Buildable, ConsumingBuilder};
 
@@ -7,12 +10,12 @@ use crate::utils::{Buildable, ConsumingBuilder};
 pub struct Cube {
     frame_transformation: Transform,
     material: Material,
+    bounds: Bounds,
 }
 
 impl Cube {
-    pub fn builder() -> CubeBuilder {
-        CubeBuilder::default()
-    }
+    const PRIMITIVE_BOUNDING_BOX: BoundingBox =
+        BoundingBox::from_axial_bounds([-1.0, 1.0], [-1.0, 1.0], [-1.0, 1.0]);
 
     fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
         let tmin_numerator = -1.0 - origin;
@@ -80,6 +83,10 @@ impl PrimitiveShape for Cube {
                 .collect()
         }
     }
+
+    fn bounds(&self) -> &Bounds {
+        &self.bounds
+    }
 }
 
 #[derive(Debug, Default)]
@@ -114,10 +121,12 @@ impl ConsumingBuilder for CubeBuilder {
     fn build(self) -> Self::Built {
         let frame_transformation = self.frame_transformation.unwrap_or_default();
         let material = self.material.unwrap_or_default();
+        let bounds = Bounds::new(Cube::PRIMITIVE_BOUNDING_BOX.transform(&frame_transformation));
 
         let cube = Cube {
             frame_transformation,
             material,
+            bounds,
         };
         cube
     }

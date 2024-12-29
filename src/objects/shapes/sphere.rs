@@ -2,10 +2,16 @@ use crate::collections::{Point, Vector};
 use crate::objects::*;
 use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Sphere {
     frame_transformation: Transform,
     material: Material,
+    bounds: Bounds,
+}
+
+impl Sphere {
+    const PRIMITIVE_BOUNDING_BOX: BoundingBox =
+        BoundingBox::from_axial_bounds([-1.0, 1.0], [-1.0, 1.0], [-1.0, 1.0]);
 }
 
 impl PrimitiveShape for Sphere {
@@ -40,6 +46,10 @@ impl PrimitiveShape for Sphere {
                 .collect()
         }
     }
+
+    fn bounds(&self) -> &Bounds {
+        &self.bounds
+    }
 }
 
 #[derive(Debug, Default)]
@@ -73,11 +83,14 @@ impl ConsumingBuilder for SphereBuilder {
 
     fn build(self) -> Self::Built {
         let frame_transformation = self.frame_transformation.unwrap_or_default();
+
         let material = self.material.unwrap_or_default();
+        let bounds = Bounds::new(Sphere::PRIMITIVE_BOUNDING_BOX.transform(&frame_transformation));
 
         let sphere = Sphere {
             frame_transformation,
             material,
+            bounds,
         };
         sphere
     }
@@ -98,7 +111,7 @@ mod tests {
 
     #[test]
     fn normal_on_unit_sphere() {
-        let sphere = Sphere::default();
+        let sphere = Sphere::builder().build();
         let point1 = Point::new(1.0, 0.0, 0.0);
         let point2 = Point::new(0.0, 1.0, 0.0);
         let point3 = Point::new(0.0, 0.0, 1.0);

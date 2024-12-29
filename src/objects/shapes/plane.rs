@@ -1,11 +1,23 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, Transform};
+use crate::objects::{
+    BoundingBox, Bounds, Coordinates, Material, PrimitiveShape, Ray, Shape, Transform,
+    Transformable,
+};
 use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Plane {
     frame_transformation: Transform,
     material: Material,
+    bounds: Bounds,
+}
+
+impl Plane {
+    const PRIMITIVE_BOUNDING_BOX: BoundingBox = BoundingBox::from_axial_bounds(
+        [f64::NEG_INFINITY, f64::INFINITY],
+        [0.0, 0.0],
+        [f64::NEG_INFINITY, f64::INFINITY],
+    );
 }
 
 impl PrimitiveShape for Plane {
@@ -28,6 +40,10 @@ impl PrimitiveShape for Plane {
 
         let t = -local_ray.origin.y / local_ray.direction.y;
         vec![t].iter().map(|&t| Coordinates::new(t, None)).collect()
+    }
+
+    fn bounds(&self) -> &Bounds {
+        &self.bounds
     }
 }
 
@@ -63,10 +79,12 @@ impl ConsumingBuilder for PlaneBuilder {
     fn build(self) -> Self::Built {
         let frame_transformation = self.frame_transformation.unwrap_or_default();
         let material = self.material.unwrap_or_default();
+        let bounds = Bounds::new(Plane::PRIMITIVE_BOUNDING_BOX.transform(&frame_transformation));
 
         let plane = Plane {
             frame_transformation,
             material,
+            bounds,
         };
         plane
     }

@@ -21,6 +21,12 @@ impl Point {
             z: 0.0,
         }
     }
+
+    pub fn at_infinity(&self) -> bool {
+        self.x.abs() == f64::INFINITY
+            || self.y.abs() == f64::INFINITY
+            || self.z.abs() == f64::INFINITY
+    }
 }
 
 impl Add<Vector> for Point {

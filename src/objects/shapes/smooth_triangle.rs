@@ -1,5 +1,7 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, Transform};
+use crate::objects::{
+    BoundingBox, Bounds, Coordinates, Material, PrimitiveShape, Ray, Shape, Transform,
+};
 use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Debug)]
@@ -9,9 +11,13 @@ pub struct SmoothTriangle {
     vertices: [Point; 3],
     edges: [Vector; 2],
     normals: [Vector; 3],
+    bounds: Bounds,
 }
 
 impl SmoothTriangle {
+    // always unbounded
+    const PRIMITIVE_BOUNDING_BOX: BoundingBox = BoundingBox::new_unbounded();
+
     pub fn vertices(&self) -> [Point; 3] {
         self.vertices
     }
@@ -66,6 +72,10 @@ impl PrimitiveShape for SmoothTriangle {
             .map(|&(t, uv_coordinates)| Coordinates::new(t, uv_coordinates))
             .collect()
     }
+
+    fn bounds(&self) -> &Bounds {
+        &self.bounds
+    }
 }
 
 #[derive(Debug, Default)]
@@ -119,12 +129,14 @@ impl ConsumingBuilder for SmoothTriangleBuilder {
         let normals = self.normals.unwrap();
         let e1 = v2 - v1;
         let e2 = v3 - v1;
+        let bounds = Bounds::new(SmoothTriangle::PRIMITIVE_BOUNDING_BOX);
         let smooth_triangle = SmoothTriangle {
             frame_transformation,
             material,
             vertices: [v1, v2, v3],
             edges: [e1, e2],
             normals,
+            bounds,
         };
         smooth_triangle
     }
@@ -139,7 +151,6 @@ impl Into<Shape> for SmoothTriangle {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::scenes::World;
     use crate::utils::approx_eq;
 
     #[test]

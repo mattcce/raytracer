@@ -1,5 +1,8 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, Transform};
+use crate::objects::{
+    BoundingBox, Bounds, Coordinates, Material, PrimitiveShape, Ray, Shape, Transform,
+    Transformable,
+};
 use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Debug)]
@@ -10,9 +13,16 @@ pub struct Cylinder {
     closed_bot: bool,
     y_maximum: f64,
     closed_top: bool,
+    bounds: Bounds,
 }
 
 impl Cylinder {
+    const PRIMITIVE_BOUNDING_BOX: BoundingBox = BoundingBox::from_axial_bounds(
+        [-1.0, 1.0],
+        [f64::NEG_INFINITY, f64::INFINITY],
+        [-1.0, 1.0],
+    );
+
     pub fn y_minimum(&mut self) -> Option<f64> {
         if self.closed_bot {
             None
@@ -139,6 +149,10 @@ impl PrimitiveShape for Cylinder {
             .map(|&t| Coordinates::new(t, None))
             .collect()
     }
+
+    fn bounds(&self) -> &Bounds {
+        &self.bounds
+    }
 }
 
 #[derive(Debug, Default)]
@@ -193,6 +207,7 @@ impl ConsumingBuilder for CylinderBuilder {
             Some(y_maximum) => (y_maximum, true),
             None => (f64::INFINITY, false),
         };
+        let bounds = Bounds::new(Cylinder::PRIMITIVE_BOUNDING_BOX.transform(&frame_transformation));
 
         let cylinder = Cylinder {
             frame_transformation,
@@ -201,6 +216,7 @@ impl ConsumingBuilder for CylinderBuilder {
             closed_bot,
             y_maximum,
             closed_top,
+            bounds,
         };
         cylinder
     }

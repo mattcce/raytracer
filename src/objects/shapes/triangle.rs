@@ -1,5 +1,8 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, Transform};
+use crate::objects::{
+    BoundingBox, Bounds, Coordinates, Material, PrimitiveShape, Ray, Shape, Transform,
+    Transformable,
+};
 use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Debug)]
@@ -9,6 +12,7 @@ pub struct Triangle {
     vertices: [Point; 3],
     edges: [Vector; 2],
     normal: Vector,
+    bounds: Bounds,
 }
 
 impl Triangle {
@@ -61,6 +65,10 @@ impl PrimitiveShape for Triangle {
         let t = f * self.edges[1].dot(origin_cross_e1);
         vec![t].iter().map(|&t| Coordinates::new(t, None)).collect()
     }
+
+    fn bounds(&self) -> &Bounds {
+        &self.bounds
+    }
 }
 
 #[derive(Debug, Default)]
@@ -105,12 +113,17 @@ impl ConsumingBuilder for TriangleBuilder {
         let e1 = v2 - v1;
         let e2 = v3 - v1;
         let normal = e2.cross(e1).normalise();
+        let bounds = Bounds::new(
+            BoundingBox::from_anchors(vec![v1, v2, v3]).transform(&frame_transformation),
+        );
+
         let triangle = Triangle {
             frame_transformation,
             material,
             vertices: [v1, v2, v3],
             edges: [e1, e2],
             normal,
+            bounds,
         };
         triangle
     }

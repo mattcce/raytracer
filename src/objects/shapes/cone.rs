@@ -1,5 +1,8 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, Transform};
+use crate::objects::{
+    BoundingBox, Bounds, Coordinates, Material, PrimitiveShape, Ray, Shape, Transform,
+    Transformable,
+};
 use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Debug)]
@@ -10,9 +13,12 @@ pub struct Cone {
     closed_bot: bool,
     y_maximum: f64,
     closed_top: bool,
+    bounds: Bounds,
 }
 
 impl Cone {
+    const PRIMITIVE_BOUNDING_BOX: BoundingBox = BoundingBox::new_unbounded();
+
     pub fn y_minimum(&mut self) -> Option<f64> {
         if self.closed_bot {
             None
@@ -77,13 +83,13 @@ impl Cone {
         t_values
     }
 
-    fn check_cap(local_ray: &Ray, t: f64, y: f64) -> bool {
-        let position = local_ray.position(t);
-
-        (position.x.powi(2) + position.z.powi(2)) <= y.powi(2)
-    }
-
     fn intersect_caps(&self, local_ray: &Ray) -> Vec<f64> {
+        fn check_cap(local_ray: &Ray, t: f64, y: f64) -> bool {
+            let position = local_ray.position(t);
+
+            (position.x.powi(2) + position.z.powi(2)) <= y.powi(2)
+        }
+
         if local_ray.direction.y.abs() < EPSILON {
             return vec![];
         }
@@ -92,14 +98,14 @@ impl Cone {
 
         if self.closed_bot {
             let t = (self.y_minimum - local_ray.origin.y) / local_ray.direction.y;
-            if Self::check_cap(local_ray, t, self.y_minimum) {
+            if check_cap(local_ray, t, self.y_minimum) {
                 t_values.push(t);
             }
         }
 
         if self.closed_top {
             let t = (self.y_maximum - local_ray.origin.y) / local_ray.direction.y;
-            if Self::check_cap(local_ray, t, self.y_maximum) {
+            if check_cap(local_ray, t, self.y_maximum) {
                 t_values.push(t);
             }
         }
@@ -147,6 +153,10 @@ impl PrimitiveShape for Cone {
             .iter()
             .map(|&t| Coordinates::new(t, None))
             .collect()
+    }
+
+    fn bounds(&self) -> &Bounds {
+        &self.bounds
     }
 }
 
@@ -202,7 +212,14 @@ impl ConsumingBuilder for ConeBuilder {
             Some(y_maximum) => (y_maximum, true),
             None => (f64::INFINITY, false),
         };
-
+        let limit = f64::max(y_minimum.abs(), y_maximum.abs());
+        let bounds = Bounds::new(
+            Cone::PRIMITIVE_BOUNDING_BOX
+                .bound_in_x_axis([-limit, limit])
+                .bound_in_y_axis([y_minimum, y_maximum])
+                .bound_in_z_axis([-limit, limit])
+                .transform(&frame_transformation),
+        );
         let cone = Cone {
             frame_transformation,
             material,
@@ -210,6 +227,7 @@ impl ConsumingBuilder for ConeBuilder {
             closed_bot,
             y_maximum,
             closed_top,
+            bounds,
         };
         cone
     }
@@ -304,5 +322,25 @@ mod tests {
         for (point, normal) in test_cases {
             assert_eq!(cone.local_normal_at(point, None), normal);
         }
+    }
+
+    #[test]
+    fn primitive_cone_bounds() {
+        let cone = Cone::builder().build();
+        let bounds = cone.bounds();
+        println!("{:?}", bounds);
+        assert!(!bounds.bounding_box().is_bounded());
+    }
+
+    #[test]
+    fn transformed_cone_bounds() {
+        let cone = Cone::builder()
+            .set_y_minimum(-5.0)
+            .set_y_maximum(3.0)
+            .build();
+        let (x_range, y_range, z_range) = cone.bounds().bounding_box().axial_bounds();
+        assert_eq!(x_range, [-5.0, 5.0]);
+        assert_eq!(y_range, [-5.0, 3.0]);
+        assert_eq!(z_range, [-5.0, 5.0]);
     }
 }

@@ -40,6 +40,7 @@ pub trait PrimitiveShape: Debug {
     fn material(&self) -> &Material;
     fn local_normal_at(&self, local_point: Point, uv_coordinates: Option<(f64, f64)>) -> Vector;
     fn local_intersect(&self, local_ray: &Ray) -> Vec<Coordinates>;
+    fn bounds(&self) -> &Bounds;
 }
 
 impl PartialEq for dyn PrimitiveShape {
