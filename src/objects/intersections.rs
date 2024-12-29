@@ -1,8 +1,8 @@
 use std::ops::Index;
 
 use crate::collections::{Colour, Point, Vector};
-use crate::utils::Shape;
 use crate::utils::floats::EPSILON;
+use crate::utils::Shape;
 
 use super::Light;
 use super::Ray;
@@ -130,11 +130,11 @@ impl<'a, S> From<Vec<RawIntersect<'a, S>>> for Intersections<'a, S>
     }
 }
 
-impl<S> Default for Intersections<'_, S>
+impl<'a, S> Default for Intersections<'a, S>
     where
         S: Shape + ?Sized,
 {
-    fn default() -> Intersections<'static, S> {
+    fn default() -> Intersections<'a, S> {
         Intersections(vec![])
     }
 }
@@ -198,7 +198,7 @@ mod tests {
         let computed_intersect = raw_intersect.precompute();
         assert_eq!(computed_intersect.target, Point::new(0.0, 0.0, 1.0));
         assert_eq!(computed_intersect.eyev, Vector::new(0.0, 0.0, -1.0));
-        assert_eq!(computed_intersect.inside, true);
+        assert!(computed_intersect.inside);
         assert_eq!(computed_intersect.normal, Vector::new(0.0, 0.0, -1.0));
     }
 

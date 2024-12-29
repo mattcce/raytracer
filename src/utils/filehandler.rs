@@ -6,14 +6,15 @@ pub fn write_to_file(
     path_string: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut f = File::create(path_string)?;
-    f.write(output_bytes)?;
+    f.write_all(output_bytes)?;
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::io::Read;
+
+    use super::*;
 
     #[test]
     fn write_file() {

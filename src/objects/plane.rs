@@ -1,10 +1,10 @@
 use std::default::Default;
-use crate::collections::{Point, Vector};
 
-use crate::objects::{Material, Ray, Transform, Transformable};
+use crate::collections::{Point, Vector};
+use crate::objects::{Material, Ray, Transform};
 use crate::utils::{EPSILON, LocallyIntersectable, Preset, Shape};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Default, Clone, Debug, PartialEq)]
 pub struct Plane {
     pub transform: Transform,
     pub material: Material,
@@ -26,15 +26,6 @@ impl Shape for Plane {
 
     fn transformation_matrix(&self) -> &Transform {
         &self.transform
-    }
-}
-
-impl Default for Plane {
-    fn default() -> Plane {
-        Plane {
-            transform: Transform::default(),
-            material: Material::default(),
-        }
     }
 }
 

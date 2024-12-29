@@ -3,7 +3,7 @@ use crate::utils::{LocallyIntersectable, Preset, Shape};
 
 use super::*;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Default, Clone, Debug, PartialEq)]
 pub struct Sphere {
     pub transform: Transform,
     pub material: Material,
@@ -25,15 +25,6 @@ impl Shape for Sphere {
 
     fn transformation_matrix(&self) -> &Transform {
         &self.transform
-    }
-}
-
-impl Default for Sphere {
-    fn default() -> Sphere {
-        Sphere {
-            transform: Transform::default(),
-            material: Material::default(),
-        }
     }
 }
 

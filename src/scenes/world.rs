@@ -2,7 +2,7 @@ use crate::collections::*;
 use crate::objects::*;
 use crate::utils::{Preset, Shape};
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct World {
     pub objects: Vec<Box<dyn Shape>>,
     pub lights: Vec<Box<Light>>,
@@ -24,9 +24,9 @@ impl World {
         for light in &self.lights {
             resulting_colour = resulting_colour
                 + computed_intersect.shade(
-                    light,
-                    self.is_shadowed_point(light, computed_intersect.over_point),
-                );
+                light,
+                self.is_shadowed_point(light, computed_intersect.over_point),
+            );
         }
         resulting_colour
     }
@@ -52,19 +52,7 @@ impl World {
         let ray = Ray::new(point, direction);
         let intersections = self.intersect_ray(&ray);
 
-        match intersections.hit() {
-            Some(hit) if hit.t < distance => true,
-            _ => false,
-        }
-    }
-}
-
-impl Default for World {
-    fn default() -> World {
-        World {
-            objects: vec![],
-            lights: vec![],
-        }
+        matches!(intersections.hit(), Some(hit) if hit.t < distance)
     }
 }
 
@@ -151,7 +139,6 @@ mod tests {
                 ..Material::preset()
             },
             transform: Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)),
-            ..Sphere::preset()
         };
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World::new(vec![Box::new(s1), Box::new(s2)], vec![Box::new(light)]);
@@ -165,28 +152,28 @@ mod tests {
     fn no_shadow_nothing_collinear() {
         let world = World::preset();
         let point = Point::new(0.0, 10.0, 0.0);
-        assert_eq!(world.is_shadowed_point(&world.lights[0], point), false);
+        assert!(!world.is_shadowed_point(&world.lights[0], point));
     }
 
     #[test]
     fn shadow_collinear() {
         let world = World::preset();
         let point = Point::new(10.0, -10.0, 10.0);
-        assert_eq!(world.is_shadowed_point(&world.lights[0], point), true);
+        assert!(world.is_shadowed_point(&world.lights[0], point));
     }
 
     #[test]
     fn no_shadow_object_behind_light() {
         let world = World::preset();
         let point = Point::new(-20.0, 20.0, -20.0);
-        assert_eq!(world.is_shadowed_point(&world.lights[0], point), false);
+        assert!(!world.is_shadowed_point(&world.lights[0], point));
     }
 
     #[test]
     fn no_shadow_object_behind_point() {
         let world = World::preset();
         let point = Point::new(-2.0, 2.0, -2.0);
-        assert_eq!(world.is_shadowed_point(&world.lights[0], point), false);
+        assert!(!world.is_shadowed_point(&world.lights[0], point));
     }
 
     #[test]

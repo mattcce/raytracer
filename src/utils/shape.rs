@@ -30,7 +30,7 @@ impl<S: Shape + ?Sized> Intersectable<S> for S {
             None => Intersections::default(),
             Some(intersects) => intersects
                 .into_iter()
-                .map(|t| RawIntersect::new(t, self, &world_ray))
+                .map(|t| RawIntersect::new(t, self, world_ray))
                 .collect::<Vec<RawIntersect<S>>>()
                 .into(),
         }
