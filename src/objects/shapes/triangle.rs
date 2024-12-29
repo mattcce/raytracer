@@ -1,8 +1,5 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{
-    BoundingBox, Bounds, Coordinates, Material, PrimitiveShape, Ray, Shape, Transform,
-    Transformable,
-};
+use crate::objects::*;
 use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Debug)]
@@ -65,7 +62,9 @@ impl PrimitiveShape for Triangle {
         let t = f * self.edges[1].dot(origin_cross_e1);
         vec![t].iter().map(|&t| Coordinates::new(t, None)).collect()
     }
+}
 
+impl Bounded for Triangle {
     fn bounds(&self) -> &Bounds {
         &self.bounds
     }

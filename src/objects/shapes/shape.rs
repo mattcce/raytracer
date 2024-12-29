@@ -10,20 +10,33 @@ pub enum Shape {
     // CSG(Box<CSG>),
 }
 
-impl Shape {
-    pub fn intersect_ray<'world: 'ray, 'ray>(
+impl Intersectable<dyn PrimitiveShape> for Shape {
+    fn intersect_ray<'world: 'ray, 'ray>(
         &'world self,
-        ray: &'ray Ray,
+        world_ray: &'ray Ray,
         transform_stack: Vec<&'ray Transform>,
     ) -> HitRegister<'ray, dyn PrimitiveShape> {
+        if !self.bounds().intersect_bounds(world_ray, &transform_stack) {
+            return HitRegister::empty();
+        }
+
         match self {
-            Shape::Primitive(primitive) => primitive.intersect_ray(ray, transform_stack),
-            Shape::Group(group) => group.intersect_ray(ray, transform_stack),
+            Shape::Primitive(primitive) => primitive.intersect_ray(world_ray, transform_stack),
+            Shape::Group(group) => group.intersect_ray(world_ray, transform_stack),
         }
     }
 }
 
-pub trait PrimitiveShape: Debug {
+impl Bounded for Shape {
+    fn bounds(&self) -> &Bounds {
+        match self {
+            Shape::Primitive(s) => s.bounds(),
+            Shape::Group(s) => s.bounds(),
+        }
+    }
+}
+
+pub trait PrimitiveShape: Debug + Bounded {
     fn normal_at(
         &self,
         world_point: Point,
@@ -40,7 +53,6 @@ pub trait PrimitiveShape: Debug {
     fn material(&self) -> &Material;
     fn local_normal_at(&self, local_point: Point, uv_coordinates: Option<(f64, f64)>) -> Vector;
     fn local_intersect(&self, local_ray: &Ray) -> Vec<Coordinates>;
-    fn bounds(&self) -> &Bounds;
 }
 
 impl PartialEq for dyn PrimitiveShape {
@@ -77,7 +89,7 @@ impl<S: PrimitiveShape + PartialEq + ?Sized> Intersectable<S> for S {
     }
 }
 
-fn transform_through_stack_forwards<T: Transformable>(
+pub(crate) fn transform_through_stack_forwards<T: Transformable>(
     mut object: T,
     transform_stack: &Vec<&Transform>,
 ) -> T {
@@ -88,7 +100,7 @@ fn transform_through_stack_forwards<T: Transformable>(
     object
 }
 
-fn transform_through_stack_backwards<T: Transformable>(
+pub(crate) fn transform_through_stack_backwards<T: Transformable>(
     mut object: T,
     transform_stack: &Vec<&Transform>,
 ) -> T {

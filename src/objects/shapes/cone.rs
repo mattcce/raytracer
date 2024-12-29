@@ -1,8 +1,5 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{
-    BoundingBox, Bounds, Coordinates, Material, PrimitiveShape, Ray, Shape, Transform,
-    Transformable,
-};
+use crate::objects::*;
 use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Debug)]
@@ -154,7 +151,9 @@ impl PrimitiveShape for Cone {
             .map(|&t| Coordinates::new(t, None))
             .collect()
     }
+}
 
+impl Bounded for Cone {
     fn bounds(&self) -> &Bounds {
         &self.bounds
     }

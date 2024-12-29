@@ -1,7 +1,5 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{
-    BoundingBox, Bounds, Coordinates, Material, PrimitiveShape, Ray, Shape, Transform,
-};
+use crate::objects::*;
 use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Debug)]
@@ -72,7 +70,9 @@ impl PrimitiveShape for SmoothTriangle {
             .map(|&(t, uv_coordinates)| Coordinates::new(t, uv_coordinates))
             .collect()
     }
+}
 
+impl Bounded for SmoothTriangle {
     fn bounds(&self) -> &Bounds {
         &self.bounds
     }

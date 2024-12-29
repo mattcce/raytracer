@@ -1,8 +1,5 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{
-    BoundingBox, Bounds, Coordinates, Material, PrimitiveShape, Ray, Shape, Transform,
-    Transformable,
-};
+use crate::objects::*;
 use crate::utils::floats::EPSILON;
 use crate::utils::{Buildable, ConsumingBuilder};
 
@@ -83,7 +80,9 @@ impl PrimitiveShape for Cube {
                 .collect()
         }
     }
+}
 
+impl Bounded for Cube {
     fn bounds(&self) -> &Bounds {
         &self.bounds
     }

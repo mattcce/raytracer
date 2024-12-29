@@ -50,16 +50,19 @@ impl<'world: 'ray, 'ray> World {
         let mut ray_hit_register = HitRegister::empty();
 
         for shape in &self.objects {
-            match shape {
-                Shape::Primitive(primitive_shape) => {
-                    let shape_hit_register = primitive_shape.intersect_ray(ray, vec![]);
-                    ray_hit_register.combine_registers(shape_hit_register);
-                }
-                Shape::Group(group) => {
-                    let shape_hit_register = group.intersect_ray(ray, vec![]);
-                    ray_hit_register.combine_registers(shape_hit_register);
-                }
-            }
+            let shape_hit_register = shape.intersect_ray(ray, vec![]);
+            ray_hit_register.combine_registers(shape_hit_register);
+
+            // match shape {
+            //     Shape::Primitive(primitive_shape) => {
+            //         let shape_hit_register = primitive_shape.intersect_ray(ray, vec![]);
+            //         ray_hit_register.combine_registers(shape_hit_register);
+            //     }
+            //     Shape::Group(group) => {
+            //         let shape_hit_register = group.intersect_ray(ray, vec![]);
+            //         ray_hit_register.combine_registers(shape_hit_register);
+            //     }
+            // }
         }
 
         ray_hit_register

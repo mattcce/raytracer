@@ -1,10 +1,11 @@
 use crate::objects::*;
 use crate::utils::{Buildable, ConsumingBuilder};
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Group {
     frame_transformation: Transform,
     objects: Vec<Shape>,
+    bounds: Bounds,
 }
 
 impl Group {
@@ -27,21 +28,17 @@ impl Intersectable<dyn PrimitiveShape> for Group {
         transform_stack.push(self.frame_transformation());
 
         for shape in &self.objects {
-            match shape {
-                Shape::Primitive(primitive_shape) => {
-                    let shape_hit_register =
-                        primitive_shape.intersect_ray(world_ray, transform_stack.clone());
-                    ray_hit_register.combine_registers(shape_hit_register);
-                }
-                Shape::Group(group) => {
-                    let shape_hit_register =
-                        group.intersect_ray(world_ray, transform_stack.clone());
-                    ray_hit_register.combine_registers(shape_hit_register);
-                }
-            }
+            let shape_hit_register = shape.intersect_ray(world_ray, transform_stack.clone());
+            ray_hit_register.combine_registers(shape_hit_register);
         }
 
         ray_hit_register
+    }
+}
+
+impl Bounded for Group {
+    fn bounds(&self) -> &Bounds {
+        &self.bounds
     }
 }
 
@@ -93,9 +90,19 @@ impl ConsumingBuilder for GroupBuilder {
     fn build(self) -> Self::Built {
         let frame_transformation = self.frame_transformation.unwrap_or_default();
         let objects = self.objects.unwrap_or_default();
+        let bounds = match objects
+            .iter()
+            .map(|objects| objects.bounds().bounding_box())
+            .reduce(|bbox_a, bbox_b| bbox_a + bbox_b)
+        {
+            Some(bbox) => Bounds::Checked(bbox.transform(&frame_transformation)),
+            None => Bounds::Unchecked(BoundingBox::new_unbounded()),
+        };
+
         let group = Group {
             frame_transformation,
             objects,
+            bounds,
         };
         group
     }

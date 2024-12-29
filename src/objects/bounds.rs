@@ -110,7 +110,11 @@ impl BoundingBox {
             && self.z_range == [f64::NEG_INFINITY, f64::INFINITY])
     }
 
-    pub fn intersect_bounds(&self, ray: &Ray) -> bool {
+    pub fn intersect_bounds<'world: 'ray, 'ray>(
+        &'world self,
+        ray: &'ray Ray,
+        transform_stack: &Vec<&'ray Transform>,
+    ) -> bool {
         fn check_axis(range: [f64; 2], origin: f64, direction: f64) -> (f64, f64) {
             assert!(range[0] <= range[1]);
 
@@ -134,6 +138,8 @@ impl BoundingBox {
                 (tmin, tmax)
             }
         }
+
+        let ray = super::shape::transform_through_stack_forwards(*ray, transform_stack);
 
         let (xtmin, xtmax) = check_axis(self.x_range, ray.origin.x, ray.direction.x);
         let (ytmin, ytmax) = check_axis(self.y_range, ray.origin.y, ray.direction.y);
@@ -220,6 +226,21 @@ impl Bounds {
         }
         .to_owned()
     }
+
+    pub fn intersect_bounds<'world: 'ray, 'ray>(
+        &'world self,
+        ray: &'ray Ray,
+        transform_stack: &Vec<&'ray Transform>,
+    ) -> bool {
+        match self {
+            Bounds::Checked(bbox) => bbox.intersect_bounds(ray, transform_stack),
+            Bounds::Unchecked(_) => true,
+        }
+    }
+}
+
+pub trait Bounded {
+    fn bounds(&self) -> &Bounds;
 }
 
 #[cfg(test)]
@@ -333,7 +354,7 @@ mod tests {
 
         for (ray, result) in rays.into_iter().zip(results.into_iter()) {
             println!("{:?}, {:?}", ray, result);
-            assert_eq!(bounding_box.intersect_bounds(&ray), result);
+            assert_eq!(bounding_box.intersect_bounds(&ray, &vec![]), result);
         }
     }
 }

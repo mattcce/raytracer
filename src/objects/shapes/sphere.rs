@@ -46,7 +46,9 @@ impl PrimitiveShape for Sphere {
                 .collect()
         }
     }
+}
 
+impl Bounded for Sphere {
     fn bounds(&self) -> &Bounds {
         &self.bounds
     }
