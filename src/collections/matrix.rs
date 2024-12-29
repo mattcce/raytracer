@@ -1,5 +1,5 @@
 use std::convert::TryFrom;
-use std::ops::{Index, IndexMut};
+use std::ops::{Index, IndexMut, Mul};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Matrix {
@@ -70,6 +70,23 @@ impl IndexMut<[usize; 2]> for Matrix {
     }
 }
 
+impl Mul<&Matrix> for Matrix {
+    type Output = Matrix;
+
+    fn mul(self, other: &Matrix) -> Self::Output {
+        assert_eq!(self.cols, other.rows);
+        let mut resulting_matrix = Matrix::new(self.rows, other.cols);
+        for i in 0..self.rows {
+            for j in 0..other.cols {
+                for k in 0..self.cols {
+                    resulting_matrix[[i, j]] += self[[i, k]] * other[[k, j]];
+                }
+            }
+        }
+        resulting_matrix
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -114,5 +131,31 @@ mod tests {
         let array = vec![vec![1.0, 2.0], vec![3.0, 4.0, 5.0], vec![6.0]];
         let result = Matrix::try_from(&array);
         assert_eq!(result, Err(MatrixConstructionError::RaggedVec));
+    }
+
+    #[test]
+    fn mul_two_matrices() {
+        let matrix1 = Matrix::try_from(&vec![
+            vec![1.0, 2.0, 3.0, 4.0],
+            vec![5.0, 6.0, 7.0, 8.0],
+            vec![9.0, 8.0, 7.0, 6.0],
+            vec![5.0, 4.0, 3.0, 2.0],
+        ])
+        .unwrap();
+        let matrix2 = Matrix::try_from(&vec![
+            vec![-2.0, 1.0, 2.0, 3.0],
+            vec![3.0, 2.0, 1.0, -1.0],
+            vec![4.0, 3.0, 6.0, 5.0],
+            vec![1.0, 2.0, 7.0, 8.0],
+        ])
+        .unwrap();
+        let resulting_matrix = Matrix::try_from(&vec![
+            vec![20.0, 22.0, 50.0, 48.0],
+            vec![44.0, 54.0, 114.0, 108.0],
+            vec![40.0, 58.0, 110.0, 102.0],
+            vec![16.0, 26.0, 46.0, 42.0],
+        ])
+        .unwrap();
+        assert_eq!(matrix1 * &matrix2, resulting_matrix);
     }
 }
