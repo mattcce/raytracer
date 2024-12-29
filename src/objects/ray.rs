@@ -1,6 +1,7 @@
-use super::Intersections;
-use super::{Transform, Transformable};
 use crate::collections::{Point, Vector};
+
+use super::{Transform, Transformable};
+use super::Intersections;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Ray {

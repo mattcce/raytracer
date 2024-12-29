@@ -1,8 +1,9 @@
+use std::fmt::Debug;
+
 use crate::collections::{Point, Vector};
 use crate::objects::{
     Intersectable, Intersections, Material, RawIntersect, Ray, Transform, Transformable,
 };
-use std::fmt::Debug;
 
 pub trait Shape: LocallyIntersectable + Debug {
     fn normal_at(&self, world_point: Point) -> Vector;

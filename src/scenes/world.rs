@@ -95,7 +95,7 @@ impl Preset for World {
 mod tests {
     use super::*;
 
-    // #[test]
+// #[test]
     // fn cast_ray() {
     //     let world = World::preset();
     //     let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));

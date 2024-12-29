@@ -1,6 +1,6 @@
-use super::Material;
 use crate::collections::{Colour, Point, Vector};
 
+use super::Material;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Light {
@@ -54,8 +54,9 @@ impl Light {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::utils::Preset;
+
+    use super::*;
 
     #[test]
     fn create_light() {

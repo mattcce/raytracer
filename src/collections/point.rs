@@ -1,5 +1,6 @@
-use super::{Matrix, Tuple4, Vector};
 use std::ops::{Add, Neg, Sub};
+
+use super::{Matrix, Tuple4, Vector};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Point {

@@ -171,6 +171,7 @@ impl Matrix {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::super::{Point, Vector};
 
     #[test]
     fn create_new_matrix() {
@@ -243,8 +244,6 @@ mod tests {
         ]);
         assert_eq!(matrix1 * &matrix2, resulting_matrix);
     }
-
-    use super::super::{Point, Vector};
 
     #[test]
     fn point_to_matrix() {

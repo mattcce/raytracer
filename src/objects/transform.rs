@@ -1,6 +1,7 @@
+use std::ops::Mul;
+
 use crate::collections::{Angle, Matrix, Tuple4};
 use crate::utils::Preset;
-use std::ops::Mul;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Transform(Matrix);
@@ -193,9 +194,11 @@ impl<T: Tuple4 + From<Matrix>> Transformable for T {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::collections::{Point, Vector};
     use std::f64::consts::FRAC_PI_2 as MATH_FRAC_PI_2;
+
+    use crate::collections::{Point, Vector};
+
+    use super::*;
 
     #[test]
     fn create_identity_transform() {

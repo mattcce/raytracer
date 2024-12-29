@@ -1,8 +1,10 @@
-use super::Light;
-use super::Ray;
+use std::ops::Index;
+
 use crate::collections::{Colour, Point, Vector};
 use crate::utils::Shape;
-use std::ops::Index;
+
+use super::Light;
+use super::Ray;
 
 const EPSILON: f64 = 1e-6;
 
@@ -125,6 +127,9 @@ impl<'a> Index<usize> for Intersections<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::objects::{Sphere, Transform, TransformKind};
+    use crate::utils::Preset;
+
     use super::*;
 
     #[test]
@@ -190,9 +195,6 @@ mod tests {
         let resulting_hit = &intersections.0[1];
         assert!(std::ptr::eq(intersections.hit().unwrap(), resulting_hit));
     }
-
-    use crate::objects::{Sphere, Transform, TransformKind};
-    use crate::utils::Preset;
 
     #[test]
     fn hit_offset_point() {

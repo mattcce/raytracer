@@ -135,9 +135,10 @@ impl Index<[usize; 2]> for Canvas {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs::File;
     use std::io::prelude::*;
+
+    use super::*;
 
     #[test]
     fn create_pixel() {

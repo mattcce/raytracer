@@ -1,7 +1,7 @@
 use crate::collections::{Angle, Matrix, Point, Vector};
-use crate::objects::{Ray, Transform, TransformKind, Transformable};
-use crate::scenes::WriteError;
+use crate::objects::{Ray, Transform, Transformable, TransformKind};
 use crate::scenes::{Canvas, Height, Width, World};
+use crate::scenes::WriteError;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Orientation(Transform);
@@ -119,8 +119,13 @@ impl Camera {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::f64::consts::FRAC_PI_2;
+
+    use crate::collections::Colour;
+    use crate::scenes::Pixel;
+    use crate::utils::Preset;
+
+    use super::*;
 
     #[test]
     fn view_transform_default() {
@@ -248,10 +253,6 @@ mod tests {
     //     );
     //     assert_eq!(camera.map_ray(100, 50), resulting_ray);
     // }
-
-    use crate::collections::Colour;
-    use crate::scenes::Pixel;
-    use crate::utils::Preset;
 
     #[test]
     fn render_world() {
