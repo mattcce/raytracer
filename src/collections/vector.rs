@@ -1,4 +1,4 @@
-use super::Point;
+use super::{Point, Tuple4};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -117,6 +117,12 @@ impl Vector {
     }
 }
 
+impl Tuple4 for Vector {
+    fn to_tuple4(self) -> [f64; 4] {
+        [self.x, self.y, self.z, 0.0]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -215,5 +221,12 @@ mod tests {
         let vector2 = Vector::new(1.0, 2.0, 3.0);
         let resulting_vector = Vector::new(1.0, -2.0, 1.0);
         assert_eq!(vector1.cross(vector2), resulting_vector);
+    }
+
+    #[test]
+    fn vector_to_tuple4() {
+        let vector = Vector::new(7.0, 5.0, 3.0);
+        let resulting_tuple4 = [7.0, 5.0, 3.0, 0.0];
+        assert_eq!(vector.to_tuple4(), resulting_tuple4);
     }
 }
