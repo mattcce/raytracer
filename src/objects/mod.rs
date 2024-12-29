@@ -1,3 +1,4 @@
+pub(crate) mod comps;
 pub mod intersections;
 pub mod light;
 pub mod material;
@@ -6,6 +7,7 @@ pub mod sphere;
 pub mod transform;
 
 // crate-level re-exports
+pub(crate) use comps::*;
 pub(crate) use intersections::*;
 pub(crate) use light::*;
 pub(crate) use material::*;
