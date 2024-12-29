@@ -8,7 +8,7 @@ fn raycast_sphere() {
         .build_into();
     let light = Light::new(Point::new(10.0, 10.0, 10.0), Colour::new(1.0, 1.0, 1.0));
     let world = World::new(vec![sphere], vec![light]);
-    let camera = Camera::new(
+    let camera = Camera::new(Native::new(
         100,
         100,
         Angle::from_radians(std::f64::consts::FRAC_PI_2),
@@ -17,7 +17,7 @@ fn raycast_sphere() {
             Point::new(0.0, 0.0, 0.0),
             Vector::new(0.0, 0.0, 1.0),
         ),
-    );
+    ));
     camera
         .render(&world)
         .unwrap()
@@ -99,7 +99,7 @@ fn raycast_scene() {
         ],
         vec![light_source],
     );
-    let camera = Camera::new(
+    let camera = Camera::new(Native::new(
         100,
         50,
         Angle::from_radians(std::f64::consts::FRAC_PI_3),
@@ -108,7 +108,7 @@ fn raycast_scene() {
             Point::new(0.0, 1.0, 0.0),
             Vector::new(0.0, 1.0, 0.0),
         ),
-    );
+    ));
     let image = camera.render(&world).unwrap();
     image
         .output_to_ppm("test_output_raycast_scene.ppm")

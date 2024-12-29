@@ -1,13 +1,19 @@
-use crate::collections::{Angle, Matrix, Point, Vector};
+use crate::collections::{Matrix, Point, Vector};
 use crate::objects::*;
-use crate::scenes::{Canvas, Height, Width, World, WriteError};
+use crate::scenes::{
+    Canvas, Height, RayGenerator, TaggedPixel, TaggedRay, Width, World, WriteError,
+};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Orientation(Transform);
+pub struct Orientation(pub Transform);
 
 impl Orientation {
     pub fn new(from: Point, to: Point, up: Vector) -> Orientation {
         Orientation(Orientation::view_transform(from, to, up))
+    }
+
+    pub fn frame_transformation(&self) -> &Transform {
+        &self.0
     }
 
     fn view_transform(from: Point, to: Point, up: Vector) -> Transform {
@@ -45,70 +51,26 @@ impl Default for Orientation {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Camera {
-    hsize: usize,
-    vsize: usize,
-    fov: Angle,
-    transform: Transform,
-    half_height: f64,
-    half_width: f64,
-    pixel_size: f64,
+pub struct Camera<R: RayGenerator> {
+    ray_generator: R,
 }
 
-impl Camera {
-    pub fn new(
-        hsize: usize,
-        vsize: usize,
-        mut fov: Angle,
-        Orientation(transform): Orientation,
-    ) -> Camera {
-        let half_view = (fov.radians() / 2.0).tan();
-
-        let half_width;
-        let half_height;
-        match hsize as f64 / vsize as f64 {
-            aspect_ratio if aspect_ratio >= 1.0 => {
-                half_width = half_view;
-                half_height = half_view / aspect_ratio;
-            }
-            aspect_ratio if aspect_ratio < 1.0 => {
-                half_width = half_view * aspect_ratio;
-                half_height = half_view;
-            }
-            _ => panic!(),
-        }
-
-        let pixel_size = (half_width * 2.0) / hsize as f64;
-
+impl<R: RayGenerator> Camera<R> {
+    pub fn new(ray_generator: R) -> Camera<R> {
         Camera {
-            hsize,
-            vsize,
-            fov,
-            transform,
-            half_height,
-            half_width,
-            pixel_size,
+            ray_generator: ray_generator,
         }
     }
 
-    fn map_ray(&self, pos_x: usize, pos_y: usize) -> Ray {
-        let offset_x = (pos_x as f64 + 0.5) * self.pixel_size;
-        let offset_y = (pos_y as f64 + 0.5) * self.pixel_size;
-        let world_x = self.half_width - offset_x;
-        let world_y = self.half_height - offset_y;
-        let inverse_transform = self.transform.invert();
-        let pixel = Point::new(world_x, world_y, -1.0).transform(&inverse_transform);
-        let origin = Point::new(0.0, 0.0, 0.0).transform(&inverse_transform);
-        let direction = (pixel - origin).normalise();
-        Ray::new(origin, direction)
-    }
-
-    pub fn render(&self, world: &World) -> Result<Canvas, WriteError> {
-        let mut image = Canvas::new(Width(self.hsize), Height(self.vsize));
-        for pos_y in 0..self.vsize {
-            for pos_x in 0..self.hsize {
-                let ray = self.map_ray(pos_x, pos_y);
-                let colour = world.cast_ray(ray);
+    pub fn render(self, world: &World) -> Result<Canvas, WriteError> {
+        let (hsize, vsize) = self.ray_generator.canvas_size();
+        let mut image = Canvas::new(Width(hsize), Height(vsize));
+        for tagged_ray in self.ray_generator {
+            let cast_ray = tagged_ray.ray();
+            let colour = world.cast_ray(cast_ray);
+            let tagged_pixels = tagged_ray.pixels();
+            for tagged_pixel in tagged_pixels {
+                let [pos_x, pos_y] = tagged_pixel.index();
                 image.paint_colour(pos_x, pos_y, colour)?;
             }
         }
@@ -120,8 +82,8 @@ impl Camera {
 mod tests {
     use std::f64::consts::FRAC_PI_2;
 
-    use crate::collections::Colour;
-    use crate::scenes::Pixel;
+    use crate::collections::*;
+    use crate::scenes::*;
     use crate::utils::{approx_eq, BuildInto, Buildable};
 
     use super::*;
@@ -183,102 +145,6 @@ mod tests {
     }
 
     #[test]
-    fn create_camera() {
-        let hsize = 160;
-        let vsize = 120;
-        let fov = Angle::from_radians(FRAC_PI_2);
-        let camera = Camera::new(hsize, vsize, fov, Orientation::default());
-        assert_eq!(camera.hsize, 160);
-        assert_eq!(camera.vsize, 120);
-        assert_eq!(camera.fov, Angle::from_radians(FRAC_PI_2));
-        assert_eq!(camera.transform, Transform::default());
-    }
-
-    #[test]
-    fn pixel_size() {
-        let camera_horizontal_canvas = Camera::new(
-            200,
-            125,
-            Angle::from_radians(std::f64::consts::FRAC_PI_2),
-            Orientation::default(),
-        );
-        let camera_vertical_canvas = Camera::new(
-            125,
-            200,
-            Angle::from_radians(std::f64::consts::FRAC_PI_2),
-            Orientation::default(),
-        );
-        approx_eq!(camera_horizontal_canvas.pixel_size, 0.01);
-        approx_eq!(camera_vertical_canvas.pixel_size, 0.01);
-    }
-
-    #[test]
-    fn ray_through_centre_of_camera_view() {
-        let camera = Camera::new(
-            201,
-            101,
-            Angle::from_radians(FRAC_PI_2),
-            Orientation::default(),
-        );
-        let specific_ray = camera.map_ray(100, 50);
-        let resulting_ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, -1.0));
-        approx_eq!(specific_ray.origin.x, resulting_ray.origin.x);
-        approx_eq!(specific_ray.origin.y, resulting_ray.origin.y);
-        approx_eq!(specific_ray.origin.z, resulting_ray.origin.z);
-        approx_eq!(specific_ray.direction.x, resulting_ray.direction.x);
-        approx_eq!(specific_ray.direction.y, resulting_ray.direction.y);
-        approx_eq!(specific_ray.direction.z, resulting_ray.direction.z);
-    }
-
-    #[test]
-    fn ray_through_corner_of_camera_view() {
-        let camera = Camera::new(
-            201,
-            101,
-            Angle::from_radians(FRAC_PI_2),
-            Orientation::default(),
-        );
-        let specific_ray = camera.map_ray(0, 0);
-        let resulting_ray = Ray::new(
-            Point::new(0.0, 0.0, 0.0),
-            Vector::new(0.665186, 0.332593, -0.668512),
-        );
-        approx_eq!(specific_ray.origin.x, resulting_ray.origin.x);
-        approx_eq!(specific_ray.origin.y, resulting_ray.origin.y);
-        approx_eq!(specific_ray.origin.z, resulting_ray.origin.z);
-        approx_eq!(specific_ray.direction.x, resulting_ray.direction.x);
-        approx_eq!(specific_ray.direction.y, resulting_ray.direction.y);
-        approx_eq!(specific_ray.direction.z, resulting_ray.direction.z);
-    }
-
-    use std::f64::consts::FRAC_PI_4;
-
-    #[test]
-    fn ray_with_transformed_camera() {
-        let transform = Transform::from(vec![
-            TransformKind::Translate(0.0, -2.0, 5.0),
-            TransformKind::Rotate(crate::prelude::Axis::Y, Angle::from_radians(FRAC_PI_4)),
-        ]);
-        let camera = Camera::new(
-            201,
-            101,
-            Angle::from_radians(FRAC_PI_2),
-            Orientation::default().transform(&transform),
-        );
-        let specific_ray = camera.map_ray(100, 50);
-        let resulting_ray = Ray::new(
-            Point::new(0.0, 2.0, -5.0),
-            Vector::new(2.0_f64.sqrt() / 2.0, 0.0, -2.0_f64.sqrt() / 2.0),
-        );
-        approx_eq!(specific_ray.origin.x, resulting_ray.origin.x);
-        approx_eq!(specific_ray.origin.y, resulting_ray.origin.y);
-        approx_eq!(specific_ray.origin.z, resulting_ray.origin.z);
-        approx_eq!(specific_ray.direction.x, resulting_ray.direction.x);
-        approx_eq!(specific_ray.direction.y, resulting_ray.direction.y);
-        approx_eq!(specific_ray.direction.z, resulting_ray.direction.z);
-    }
-
-    #[test]
     fn render_world() {
         let s1 = Sphere::builder()
             .set_material(Material {
@@ -297,7 +163,7 @@ mod tests {
             objects: vec![s1, s2],
             lights: vec![light],
         };
-        let camera = Camera::new(
+        let native_ray_generator = Native::new(
             11,
             11,
             Angle::from_radians(FRAC_PI_2),
@@ -307,6 +173,7 @@ mod tests {
                 Vector::new(0.0, 1.0, 0.0),
             ),
         );
+        let camera = Camera::new(native_ray_generator);
         let image = camera.render(&world).unwrap();
         assert_eq!(
             image[[5, 5]],
