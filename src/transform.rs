@@ -167,11 +167,11 @@ impl Mul<&Matrix> for Transform {
 
 pub trait Transformable<T> {
     // transform is consuming because it accepts Tuple4 types which are Copy
-    fn transform(self, transform: Transform) -> T;
+    fn transform(self, transform: &Transform) -> T;
 }
 
 impl<T: Tuple4 + From<Matrix>> Transformable<T> for T {
-    fn transform(self, transform: Transform) -> T {
+    fn transform(self, transform: &Transform) -> T {
         T::from(transform.clone() * &Matrix::from(self))
     }
 }
@@ -198,14 +198,14 @@ mod tests {
     fn identity_transform_point() {
         let point = Point::new(1.0, 2.0, 3.0);
         let transform = Transform::new(TransformKind::Identity);
-        assert_eq!(point.transform(transform), point);
+        assert_eq!(point.transform(&transform), point);
     }
 
     #[test]
     fn identity_transform_vector() {
         let vector = Vector::new(1.0, 2.0, 3.0);
         let transform = Transform::new(TransformKind::Identity);
-        assert_eq!(vector.transform(transform), vector);
+        assert_eq!(vector.transform(&transform), vector);
     }
 
     #[test]
@@ -225,7 +225,7 @@ mod tests {
         let point = Point::new(-3.0, 4.0, 5.0);
         let transform = Transform::new(TransformKind::Translate(5.0, -3.0, 2.0));
         let resulting_point = Point::new(2.0, 1.0, 7.0);
-        assert_eq!(point.transform(transform), resulting_point);
+        assert_eq!(point.transform(&transform), resulting_point);
     }
 
     #[test]
@@ -233,14 +233,14 @@ mod tests {
         let point = Point::new(-3.0, 4.0, 5.0);
         let transform = Transform::new(TransformKind::Translate(5.0, -3.0, 2.0)).invert();
         let resulting_point = Point::new(-8.0, 7.0, 3.0);
-        assert_eq!(point.transform(transform), resulting_point);
+        assert_eq!(point.transform(&transform), resulting_point);
     }
 
     #[test]
     fn translate_vector() {
         let vector = Vector::new(5.0, -3.0, 2.0);
         let transform = Transform::new(TransformKind::Translate(5.0, -3.0, 2.0));
-        assert_eq!(vector.transform(transform), vector);
+        assert_eq!(vector.transform(&transform), vector);
     }
 
     #[test]
@@ -260,7 +260,7 @@ mod tests {
         let point = Point::new(-3.0, 4.0, 5.0);
         let transform = Transform::new(TransformKind::Scale(5.0, -3.0, 2.0));
         let resulting_point = Point::new(-15.0, -12.0, 10.0);
-        assert_eq!(point.transform(transform), resulting_point);
+        assert_eq!(point.transform(&transform), resulting_point);
     }
 
     #[test]
@@ -268,7 +268,7 @@ mod tests {
         let vector = Vector::new(5.0, -3.0, 2.0);
         let transform = Transform::new(TransformKind::Scale(5.0, -3.0, 2.0));
         let resulting_vector = Vector::new(25.0, 9.0, 4.0);
-        assert_eq!(vector.transform(transform), resulting_vector);
+        assert_eq!(vector.transform(&transform), resulting_vector);
     }
 
     #[test]
@@ -308,9 +308,9 @@ mod tests {
         let resulting_point_x = Point::new(-1.0, 2.0, 3.0);
         let resulting_point_y = Point::new(1.0, -2.0, 3.0);
         let resulting_point_z = Point::new(1.0, 2.0, -3.0);
-        assert_eq!(point.transform(transform_x), resulting_point_x);
-        assert_eq!(point.transform(transform_y), resulting_point_y);
-        assert_eq!(point.transform(transform_z), resulting_point_z);
+        assert_eq!(point.transform(&transform_x), resulting_point_x);
+        assert_eq!(point.transform(&transform_y), resulting_point_y);
+        assert_eq!(point.transform(&transform_z), resulting_point_z);
     }
 
     #[test]
@@ -322,9 +322,9 @@ mod tests {
         let resulting_vector_x = Vector::new(-1.0, 2.0, 3.0);
         let resulting_vector_y = Vector::new(1.0, -2.0, 3.0);
         let resulting_vector_z = Vector::new(1.0, 2.0, -3.0);
-        assert_eq!(vector.transform(transform_x), resulting_vector_x);
-        assert_eq!(vector.transform(transform_y), resulting_vector_y);
-        assert_eq!(vector.transform(transform_z), resulting_vector_z);
+        assert_eq!(vector.transform(&transform_x), resulting_vector_x);
+        assert_eq!(vector.transform(&transform_y), resulting_vector_y);
+        assert_eq!(vector.transform(&transform_z), resulting_vector_z);
     }
 
     #[test]
@@ -421,12 +421,12 @@ mod tests {
         let resulting_point4 = Point::new(2.0, 7.0, 4.0);
         let resulting_point5 = Point::new(2.0, 3.0, 6.0);
         let resulting_point6 = Point::new(2.0, 3.0, 7.0);
-        assert_eq!(point.transform(transform1), resulting_point1);
-        assert_eq!(point.transform(transform2), resulting_point2);
-        assert_eq!(point.transform(transform3), resulting_point3);
-        assert_eq!(point.transform(transform4), resulting_point4);
-        assert_eq!(point.transform(transform5), resulting_point5);
-        assert_eq!(point.transform(transform6), resulting_point6);
+        assert_eq!(point.transform(&transform1), resulting_point1);
+        assert_eq!(point.transform(&transform2), resulting_point2);
+        assert_eq!(point.transform(&transform3), resulting_point3);
+        assert_eq!(point.transform(&transform4), resulting_point4);
+        assert_eq!(point.transform(&transform5), resulting_point5);
+        assert_eq!(point.transform(&transform6), resulting_point6);
     }
 
     #[test]
@@ -444,12 +444,12 @@ mod tests {
         let resulting_vector4 = Vector::new(2.0, 7.0, 4.0);
         let resulting_vector5 = Vector::new(2.0, 3.0, 6.0);
         let resulting_vector6 = Vector::new(2.0, 3.0, 7.0);
-        assert_eq!(vector.transform(transform1), resulting_vector1);
-        assert_eq!(vector.transform(transform2), resulting_vector2);
-        assert_eq!(vector.transform(transform3), resulting_vector3);
-        assert_eq!(vector.transform(transform4), resulting_vector4);
-        assert_eq!(vector.transform(transform5), resulting_vector5);
-        assert_eq!(vector.transform(transform6), resulting_vector6);
+        assert_eq!(vector.transform(&transform1), resulting_vector1);
+        assert_eq!(vector.transform(&transform2), resulting_vector2);
+        assert_eq!(vector.transform(&transform3), resulting_vector3);
+        assert_eq!(vector.transform(&transform4), resulting_vector4);
+        assert_eq!(vector.transform(&transform5), resulting_vector5);
+        assert_eq!(vector.transform(&transform6), resulting_vector6);
     }
 
     #[test]

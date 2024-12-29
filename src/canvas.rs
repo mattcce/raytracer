@@ -85,7 +85,7 @@ impl Canvas {
             _ => (),
         };
 
-        self.pixels[row as usize][column as usize] = Pixel::paint(colour);
+        self.pixels[row][column] = Pixel::paint(colour);
         Ok(())
     }
 
@@ -107,7 +107,7 @@ impl Canvas {
                         row_buffer = String::new();
                     }
                     row_buffer.push_str(&colour_value[..]);
-                    row_buffer.push_str(" ");
+                    row_buffer.push(' ');
                 }
             }
             writeln!(buffer, "{}", row_buffer.trim())?;

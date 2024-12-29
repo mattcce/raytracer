@@ -26,7 +26,7 @@ impl<'a> Intersect<'a> {
 pub struct Intersections<'a>(Vec<Intersect<'a>>);
 
 impl<'a> Intersections<'a> {
-    pub fn add(&mut self, intersect: Intersect<'a>) -> () {
+    pub fn add(&mut self, intersect: Intersect<'a>) {
         for (i, v) in self.0.iter_mut().enumerate() {
             if intersect.t < v.t {
                 self.0.insert(i, intersect);

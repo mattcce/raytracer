@@ -43,7 +43,7 @@ fn main() {
             y if y >= 0.0 => 550 - y as usize,
             _ => break,
         };
-        if let Err(_) = canvas.paint_colour(pos_x, pos_y, Colour::new(1.0, 0.0, 0.0)) {
+        if canvas.paint_colour(pos_x, pos_y, Colour::new(1.0, 0.0, 0.0)).is_err() {
             break;
         } else {
             scene1.tick();
