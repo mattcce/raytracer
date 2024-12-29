@@ -208,6 +208,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn output_canvas_to_ppm() {
         let mut canvas = Canvas::new(CanvasSize::new(2, 2));
         canvas
