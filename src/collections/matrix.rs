@@ -7,6 +7,8 @@ pub struct Matrix {
     matrix: Vec<Vec<f64>>,
 }
 
+type Idx = [usize; 2];
+
 impl Matrix {
     pub fn new(rows: usize, cols: usize) -> Matrix {
         let mut matrix = Vec::with_capacity(rows);
@@ -48,16 +50,16 @@ impl From<&Vec<Vec<f64>>> for Matrix {
     }
 }
 
-impl Index<[usize; 2]> for Matrix {
+impl Index<Idx> for Matrix {
     type Output = f64;
 
-    fn index(&self, index: [usize; 2]) -> &Self::Output {
+    fn index(&self, index: Idx) -> &Self::Output {
         &self.matrix[index[0]][index[1]]
     }
 }
 
-impl IndexMut<[usize; 2]> for Matrix {
-    fn index_mut(&mut self, index: [usize; 2]) -> &mut Self::Output {
+impl IndexMut<Idx> for Matrix {
+    fn index_mut(&mut self, index: Idx) -> &mut Self::Output {
         &mut self.matrix[index[0]][index[1]]
     }
 }
@@ -100,6 +102,49 @@ impl Matrix {
             }
         }
         transposed_matrix
+    }
+
+    pub fn det(&self) -> f64 {
+        assert_eq!(self.rows, self.cols);
+        assert!(self.rows >= 2);
+
+        if self.rows == 2 {
+            self[[0, 0]] * self[[1, 1]] - self[[0, 1]] * self[[1, 0]]
+        } else {
+            let mut det = 0.0;
+            for i in 0..self.rows {
+                det += self[[0, i]] * self.cofactor([0, i]);
+            }
+            det
+        }
+    }
+
+    pub fn submatrix(&self, [row, col]: Idx) -> Matrix {
+        let mut submatrix = self.matrix.clone();
+
+        submatrix.remove(row);
+        submatrix.iter_mut().for_each(|row| {
+            row.remove(col);
+            row.shrink_to_fit();
+        });
+
+        Matrix {
+            rows: self.rows - 1,
+            cols: self.cols - 1,
+            matrix: submatrix,
+        }
+    }
+
+    pub fn minor(&self, index: Idx) -> f64 {
+        self.submatrix(index).det()
+    }
+
+    pub fn cofactor(&self, index @ [row, col]: Idx) -> f64 {
+        if (row + col) % 2 == 0 {
+            self.minor(index)
+        } else {
+            -self.minor(index)
+        }
     }
 }
 
@@ -218,5 +263,59 @@ mod tests {
             vec![0.0, 8.0, 3.0, 8.0],
         ]);
         assert_eq!(matrix.transpose(), resulting_matrix);
+    }
+
+    #[test]
+    fn determinant_of_2x2_matrix() {
+        let matrix = Matrix::from(&vec![vec![1.0, 5.0], vec![-3.0, 2.0]]);
+        assert_eq!(matrix.det(), 17.0);
+    }
+
+    #[test]
+    fn submatrix_of_matrix() {
+        let matrix = Matrix::from(&vec![
+            vec![-6.0, 1.0, 1.0, 6.0],
+            vec![-8.0, 5.0, 8.0, 6.0],
+            vec![-1.0, 0.0, 8.0, 2.0],
+            vec![-7.0, 1.0, -1.0, 1.0],
+        ]);
+        let resulting_submatrix = Matrix::from(&vec![
+            vec![-6.0, 1.0, 6.0],
+            vec![-8.0, 8.0, 6.0],
+            vec![-7.0, -1.0, 1.0],
+        ]);
+        assert_eq!(matrix.submatrix([2, 1]), resulting_submatrix);
+    }
+
+    #[test]
+    fn minor_of_matrix() {
+        let matrix = Matrix::from(&vec![
+            vec![3.0, 5.0, 0.0],
+            vec![2.0, -1.0, -7.0],
+            vec![6.0, -1.0, 5.0],
+        ]);
+        assert_eq!(matrix.minor([1, 0]), 25.0);
+    }
+
+    #[test]
+    fn cofactor_of_matrix() {
+        let matrix = Matrix::from(&vec![
+            vec![3.0, 5.0, 0.0],
+            vec![2.0, -1.0, -7.0],
+            vec![6.0, -1.0, 5.0],
+        ]);
+        assert_eq!(matrix.cofactor([0, 0]), -12.0);
+        assert_eq!(matrix.cofactor([1, 0]), -25.0);
+    }
+
+    #[test]
+    fn determinant_of_4x4_matrix() {
+        let matrix = Matrix::from(&vec![
+            vec![-2.0, -8.0, 3.0, 5.0],
+            vec![-3.0, 1.0, 7.0, 3.0],
+            vec![1.0, 2.0, -9.0, 6.0],
+            vec![-6.0, 7.0, 7.0, -9.0],
+        ]);
+        assert_eq!(matrix.det(), -4071.0)
     }
 }
