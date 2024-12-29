@@ -49,7 +49,6 @@ impl Pixel {
 
 #[derive(Debug)]
 pub enum WriteError {
-    NegativeCoords,
     OutOfBounds,
 }
 
@@ -77,13 +76,12 @@ impl Canvas {
 
     pub fn paint_colour(
         &mut self,
-        column: i128,
-        row: i128,
+        column: u64,
+        row: u64,
         colour: Colour,
     ) -> Result<(), WriteError> {
         match (column, row) {
-            (column, row) if column < 0 || row < 0 => return Err(WriteError::NegativeCoords),
-            (column, row) if column > self.size.width as i128 || row > self.size.height as i128 => {
+            (column, row) if column > self.size.width || row > self.size.height => {
                 return Err(WriteError::OutOfBounds)
             }
             _ => (),
