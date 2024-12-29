@@ -1,27 +1,7 @@
 use crate::collections::{Point, Vector};
 use crate::intersections::{Intersect, Intersections};
-use crate::transform::{Transform, TransformKind, Transformable};
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct Sphere {
-    transform: Transform,
-}
-
-impl Sphere {
-    pub fn new() -> Sphere {
-        Sphere {
-            transform: Transform::new(TransformKind::Identity),
-        }
-    }
-
-    pub fn set_transform(&mut self, transform: &Transform) {
-        self.transform = transform.clone();
-    }
-
-    pub fn get_transform(&self) -> &Transform {
-        &self.transform
-    }
-}
+use crate::objects::Sphere;
+use crate::transform::{Transform, Transformable};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Ray {
@@ -72,22 +52,7 @@ impl Transformable for Ray {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn create_sphere() {
-        let sphere = Sphere::new();
-        let resulting_sphere = Sphere {
-            transform: Transform::new(TransformKind::Identity),
-        };
-        assert_eq!(sphere, resulting_sphere);
-    }
-
-    #[test]
-    fn transform_sphere() {
-        let mut sphere = Sphere::new();
-        let transform = Transform::new(TransformKind::Translate(5.0, 0.0, 0.0));
-        sphere.set_transform(&transform);
-    }
+    use crate::transform::TransformKind;
 
     #[test]
     fn create_ray() {

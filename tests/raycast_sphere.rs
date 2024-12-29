@@ -1,5 +1,6 @@
 use raytracer::canvas::*;
 use raytracer::collections::*;
+use raytracer::objects::*;
 use raytracer::ray::*;
 use raytracer::transform::{Transform, TransformKind};
 

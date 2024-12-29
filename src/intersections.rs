@@ -1,6 +1,5 @@
+use crate::objects::Sphere;
 use std::ops::Index;
-
-use crate::ray::Sphere;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Intersect<'a> {
@@ -64,7 +63,6 @@ impl<'a> Index<usize> for Intersections<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ray::Sphere;
 
     #[test]
     fn create_intersect() {
