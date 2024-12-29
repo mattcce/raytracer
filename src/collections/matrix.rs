@@ -19,6 +19,14 @@ impl Matrix {
         }
         Matrix { rows, cols, matrix }
     }
+
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    pub fn cols(&self) -> usize {
+        self.cols
+    }
 }
 
 impl From<&Vec<Vec<f64>>> for Matrix {
@@ -100,6 +108,13 @@ mod tests {
             matrix: stored_matrix,
         };
         assert_eq!(matrix, resulting_matrix);
+    }
+
+    #[test]
+    fn matrix_accessors() {
+        let matrix = Matrix::new(4, 1);
+        assert_eq!(matrix.rows(), 4);
+        assert_eq!(matrix.cols(), 1);
     }
 
     #[test]
