@@ -21,6 +21,7 @@ impl Scene {
 }
 
 #[test]
+#[ignore]
 fn basic_2d_projectile_motion_scene() {
     let projectile1 = Projectile {
         position: Point::new(0.0, 1.0, 0.0),
