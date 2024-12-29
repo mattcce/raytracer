@@ -1,5 +1,5 @@
 use super::Point;
-use std::ops::{Add, Neg, Sub};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vector {
@@ -58,6 +58,38 @@ impl Neg for Vector {
     }
 }
 
+impl Mul<Vector> for f64 {
+    type Output = Vector;
+
+    fn mul(self, other: Vector) -> Self::Output {
+        Vector {
+            x: self * other.x,
+            y: self * other.y,
+            z: self * other.z,
+        }
+    }
+}
+
+impl Mul<f64> for Vector {
+    type Output = Vector;
+
+    fn mul(self, other: f64) -> Self::Output {
+        other * self
+    }
+}
+
+impl Div<f64> for Vector {
+    type Output = Vector;
+
+    fn div(self, other: f64) -> Self::Output {
+        Vector {
+            x: self.x / other,
+            y: self.y / other,
+            z: self.z / other,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -91,5 +123,29 @@ mod tests {
         let vector = Vector::new(7.0, 4.0, 7.0);
         let resulting_vector = Vector::new(-7.0, -4.0, -7.0);
         assert_eq!(-vector, resulting_vector);
+    }
+
+    #[test]
+    fn mul_scalar_by_vector() {
+        let scalar = 2.0f64;
+        let vector = Vector::new(5.0, 5.0, 7.0);
+        let resulting_vector = Vector::new(10.0, 10.0, 14.0);
+        assert_eq!(scalar * vector, resulting_vector);
+    }
+
+    #[test]
+    fn mul_vector_by_scalar() {
+        let vector = Vector::new(3.0, 1.0, 7.0);
+        let scalar = 3.0f64;
+        let resulting_vector = Vector::new(9.0, 3.0, 21.0);
+        assert_eq!(vector * scalar, resulting_vector);
+    }
+
+    #[test]
+    fn div_vector_by_scalar() {
+        let vector = Vector::new(3.0, 6.0, 9.0);
+        let scalar = 3.0f64;
+        let resulting_vector = Vector::new(1.0, 2.0, 3.0);
+        assert_eq!(vector / scalar, resulting_vector);
     }
 }
