@@ -16,7 +16,7 @@ impl Light {
         }
     }
 
-    pub fn shade_phong(
+    pub(crate) fn shade_phong(
         &self,
         material: &Material,
         target: Point,
@@ -54,33 +54,20 @@ impl Light {
 
 #[cfg(test)]
 mod tests {
-    use crate::scenes::World;
-    use crate::utils::Preset;
+    use crate::utils::floats::approx_eq;
 
     use super::*;
-
-    #[test]
-    fn create_light() {
-        let position = Point::new(1.0, 1.0, 1.0);
-        let intensity = Colour::new(0.0, 0.0, 0.0);
-        let light = Light::new(position, intensity);
-        let resulting_light = Light {
-            position,
-            intensity,
-        };
-        assert_eq!(light, resulting_light)
-    }
 
     #[test]
     fn eye_directly_between_light_and_surface() {
         let material = Material::preset();
         let position = Point::zero();
         let eyev = Vector::new(0.0, 0.0, -1.0);
-        let normalv = Vector::new(0.0, 0.0, -1.0);
+        let normal = Vector::new(0.0, 0.0, -1.0);
         let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let resulting_colour = Colour::new(1.9, 1.9, 1.9);
         assert_eq!(
-            light.shade_phong(&material, position, eyev, normalv, false),
+            light.shade_phong(&material, position, eyev, normal, false),
             resulting_colour
         );
     }
@@ -90,61 +77,55 @@ mod tests {
         let material = Material::preset();
         let position = Point::zero();
         let eyev = Vector::new(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
-        let normalv = Vector::new(0.0, 0.0, -1.0);
+        let normal = Vector::new(0.0, 0.0, -1.0);
         let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let resulting_colour = Colour::new(1.0, 1.0, 1.0);
         assert_eq!(
-            light.shade_phong(&material, position, eyev, normalv, false),
+            light.shade_phong(&material, position, eyev, normal, false),
             resulting_colour
         );
     }
 
-    //     #[test]
-    //     fn eye_between_light_and_surface_light_offset_45_degrees() {
-    //         let material = Material::preset();
-    //         let position = Point::zero();
-    //         let eyev = Vector::new(0.0, 0.0, -1.0);
-    //         let normalv = Vector::new(0.0, 0.0, -1.0);
-    //         let light = light::new(Point::new(0.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
-    //         let resulting_colour = Colour::new(0.7364, 0.7364, 0.7364);
-    //         assert_eq!(
-    //             lighting(material, light, position, eyev, normalv),
-    //             resulting_colour
-    //         );
-    //     }
+    #[test]
+    fn eye_between_light_and_surface_light_offset_45_degrees() {
+        let material = Material::preset();
+        let position = Point::zero();
+        let eyev = Vector::new(0.0, 0.0, -1.0);
+        let normal = Vector::new(0.0, 0.0, -1.0);
+        let light = Light::new(Point::new(0.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
+        let colour = light.shade_phong(&material, position, eyev, normal, false);
+        let resulting_colour = Colour::new(0.736396, 0.736396, 0.736396);
+        approx_eq!(colour.red, resulting_colour.red);
+        approx_eq!(colour.green, resulting_colour.green);
+        approx_eq!(colour.blue, resulting_colour.blue);
+    }
 
-    //     #[test]
-    //     fn eye_in_path_of_reflection_vector() {
-    //         let material = Material::preset();
-    //         let position = Point::zero();
-    //         let eyev = Vector::new(0.0, -2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
-    //         let normalv = Vector::new(0.0, 0.0, -1.0);
-    //         let light = light::new(Point::new(0.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
-    //         let resulting_colour = Colour::new(1.6364, 1.6364, 1.6364);
-    //         assert_eq!(
-    //             lighting(material, light, position, eyev, normalv),
-    //             resulting_colour
-    //         );
-    //     }
+    #[test]
+    fn eye_in_path_of_reflection_vector() {
+        let material = Material::preset();
+        let position = Point::zero();
+        let eyev = Vector::new(0.0, -2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
+        let normal = Vector::new(0.0, 0.0, -1.0);
+        let light = Light::new(Point::new(0.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
+        let colour = light.shade_phong(&material, position, eyev, normal, false);
+        let resulting_colour = Colour::new(1.636396, 1.636396, 1.636396);
+        approx_eq!(colour.red, resulting_colour.red);
+        approx_eq!(colour.green, resulting_colour.green);
+        approx_eq!(colour.blue, resulting_colour.blue);
+    }
 
     #[test]
     fn light_behind_surface() {
         let material = Material::preset();
         let position = Point::zero();
         let eyev = Vector::new(0.0, 0.0, -1.0);
-        let normalv = Vector::new(0.0, 0.0, -1.0);
+        let normal = Vector::new(0.0, 0.0, -1.0);
         let light = Light::new(Point::new(0.0, 0.0, 10.0), Colour::new(1.0, 1.0, 1.0));
         let resulting_colour = Colour::new(0.1, 0.1, 0.1);
         assert_eq!(
-            light.shade_phong(&material, position, eyev, normalv, false),
+            light.shade_phong(&material, position, eyev, normal, false),
             resulting_colour
         );
-    }
-
-    #[test]
-    fn no_shadow() {
-        let world = World::preset();
-        assert!(!world.is_shadowed_point(&world.lights[0], Point::new(0.0, 10.0, 0.0)),);
     }
 
     #[test]
@@ -152,11 +133,11 @@ mod tests {
         let material = Material::preset();
         let position = Point::zero();
         let eyev = Vector::new(0.0, 0.0, -1.0);
-        let normalv = Vector::new(0.0, 0.0, -1.0);
+        let normal = Vector::new(0.0, 0.0, -1.0);
         let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let resulting_colour = Colour::new(0.1, 0.1, 0.1);
         assert_eq!(
-            light.shade_phong(&material, position, eyev, normalv, true),
+            light.shade_phong(&material, position, eyev, normal, true),
             resulting_colour
         );
     }

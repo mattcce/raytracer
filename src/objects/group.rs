@@ -1,96 +1,82 @@
-use std::cell::RefCell;
-use std::default::Default;
-use std::rc::{Rc, Weak};
+use crate::objects::*;
 
-use crate::collections::{Point, Vector};
-use crate::objects::{Ray, Transform, Transformable};
-
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct Group {
-    transform: Transform,
-    parent: Option<Rc<RefCell<Group>>>,
-    self_ref: Weak<RefCell<Group>>,
-}
-
-pub trait GroupTransformable {
-    fn world_to_object_ray(&self, mut world_ray: Ray) -> Ray {
-        if let Some(parent) = self.parent() {
-            world_ray = parent.borrow().world_to_object_ray(world_ray);
-        }
-
-        world_ray.transform(&self.transformation_matrix().invert())
-    }
-
-    fn world_to_object_point(&self, mut world_point: Point) -> Point {
-        if let Some(parent) = self.parent() {
-            world_point = parent.borrow().world_to_object_point(world_point);
-        }
-
-        world_point.transform(&self.transformation_matrix().invert())
-    }
-
-    fn normal_to_world_vector(&self, object_normal: Vector) -> Vector {
-        let object_normal = object_normal
-            .transform(&self.transformation_matrix().invert().transpose())
-            .normalise();
-
-        if let Some(parent) = self.parent() {
-            parent.borrow().normal_to_world_vector(object_normal)
-        } else {
-            object_normal
-        }
-    }
-
-    fn transformation_matrix(&self) -> &Transform;
-    fn transformation_matrix_mut(&mut self) -> &mut Transform;
-    fn parent(&self) -> Option<Rc<RefCell<Group>>>;
-    fn set_parent(&mut self, group: Rc<RefCell<Group>>);
+    frame_transformation: Transform,
+    objects: Vec<Shape>,
 }
 
 impl Group {
-    pub fn new<G: GroupTransformable>(
-        transform: Transform,
-        objects: Vec<&mut G>,
-    ) -> Rc<RefCell<Group>> {
-        let self_ref = Weak::new();
-        let group = Rc::new(RefCell::new(Self {
-            transform,
-            parent: None,
-            self_ref,
-        }));
-        group.borrow_mut().self_ref = Rc::downgrade(&Rc::clone(&group));
-
-        for object in objects {
-            object.set_parent(Rc::clone(&group))
-        }
-
-        group
+    pub fn builder() -> ShapeBuilder<Group> {
+        ShapeBuilder::default()
     }
 
-    pub fn add_object<G: GroupTransformable>(&mut self, object: &mut G)
-    where
-        G: GroupTransformable,
-    {
-        let group = self.self_ref.upgrade().unwrap();
-        object.set_parent(group);
+    pub fn frame_transformation(&self) -> &Transform {
+        &self.frame_transformation
+    }
+
+    pub fn objects(&self) -> &Vec<Shape> {
+        &self.objects
     }
 }
 
-impl GroupTransformable for Group {
-    fn transformation_matrix(&self) -> &Transform {
-        &self.transform
+impl Intersectable<dyn PrimitiveShape> for Group {
+    fn intersect_ray<'world: 'ray, 'ray>(
+        &'world self,
+        world_ray: &'ray Ray,
+        mut transform_stack: Vec<&'ray Transform>,
+    ) -> HitRegister<'ray, dyn PrimitiveShape> {
+        let mut ray_hit_register = HitRegister::empty();
+        transform_stack.push(self.frame_transformation());
+
+        for shape in &self.objects {
+            match shape {
+                Shape::Primitive(primitive_shape) => {
+                    let shape_hit_register =
+                        primitive_shape.intersect_ray(world_ray, transform_stack.clone());
+                    ray_hit_register.combine_registers(shape_hit_register);
+                }
+                Shape::Group(group) => {
+                    let shape_hit_register =
+                        group.intersect_ray(world_ray, transform_stack.clone());
+                    ray_hit_register.combine_registers(shape_hit_register);
+                }
+            }
+        }
+
+        ray_hit_register
+    }
+}
+
+impl ShapeBuilder<Group> {
+    pub fn set_objects(mut self, objects: Vec<Shape>) -> ShapeBuilder<Group> {
+        self.objects = Some(objects);
+        self
     }
 
-    fn transformation_matrix_mut(&mut self) -> &mut Transform {
-        &mut self.transform
+    pub fn add_object(mut self, object: Shape) -> ShapeBuilder<Group> {
+        match self.objects {
+            Some(ref mut objects) => {
+                objects.push(object);
+            }
+            None => self.objects = Some(vec![object]),
+        }
+        self
     }
 
-    fn parent(&self) -> Option<Rc<RefCell<Group>>> {
-        Option::clone(&self.parent)
+    pub fn build(self) -> Group {
+        let frame_transformation = self.frame_transformation.unwrap_or_default();
+        let objects = self.objects.unwrap_or_default();
+        let group = Group {
+            frame_transformation,
+            objects,
+        };
+        group
     }
 
-    fn set_parent(&mut self, group: Rc<RefCell<Group>>) {
-        self.parent = Some(group);
+    pub fn wrap(self) -> Shape {
+        let group = self.build();
+        Shape::wrap_group(group)
     }
 }
 
@@ -98,117 +84,85 @@ impl GroupTransformable for Group {
 mod tests {
     use super::*;
     use crate::collections::{Angle, Point, Vector};
-    use crate::objects::{Axis, Ray, Shape, Sphere, TransformKind, Transformable};
-    use crate::scenes::World;
+    use crate::objects::{Axis, Ray, Sphere, TransformKind};
 
     #[test]
-    fn intersect_ray_with_group_in_world() {
-        let s1 = Sphere::default();
-        let mut s2 = Sphere::default();
-        *s2.transformation_matrix_mut() = Transform::new(TransformKind::Translate(0.0, 0.0, -3.0));
-        let mut s3 = Sphere::default();
-        *s3.transformation_matrix_mut() = Transform::new(TransformKind::Translate(5.0, 0.0, 0.0));
-        let mut objects = vec![s1, s2, s3];
-
-        let group = Group::new(Transform::default(), objects.iter_mut().collect());
-
-        let objects = objects
-            .into_iter()
-            .map(|object: Sphere| -> Box<dyn Shape> { Box::new(object) })
-            .collect();
-        let world = World::new(objects, vec![]);
+    fn intersect_ray_with_nonempty_group() {
+        let s1 = Sphere::builder().wrap();
+        let s2 = Sphere::builder()
+            .set_frame_transformation(Transform::new(TransformKind::Translate(0.0, 0.0, -3.0)))
+            .wrap();
+        let s3 = Sphere::builder()
+            .set_frame_transformation(Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)))
+            .wrap();
+        let objects = vec![s1, s2, s3];
+        let group = Group::builder().set_objects(objects).wrap();
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
 
-        let s1 = world.objects[0].as_ref();
-        let s2 = world.objects[1].as_ref();
-
-        let intersections = world.intersect_ray(&ray);
-        assert_eq!(intersections.0.len(), 4);
-        assert_eq!(intersections.0[0].object, s2);
-        assert_eq!(intersections.0[1].object, s2);
-        assert_eq!(intersections.0[2].object, s1);
-        assert_eq!(intersections.0[3].object, s1);
+        let shape = group
+            .intersect_ray(&ray, vec![])
+            .finalise_hit()
+            .unwrap()
+            .object();
+        let resulting_shape = Sphere::builder()
+            .set_frame_transformation(Transform::new(TransformKind::Translate(0.0, 0.0, -3.0)))
+            .build();
+        assert_eq!(shape, &resulting_shape as &dyn PrimitiveShape);
     }
-
-    use std::ops::DerefMut;
 
     #[test]
     fn intersect_transformed_group() {
-        let mut s1 = Sphere::default();
-        *s1.transformation_matrix_mut() = Transform::new(TransformKind::Translate(5.0, 0.0, 0.0));
-        let mut objects = vec![s1];
-
-        Group::new(
-            Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)),
-            objects.iter_mut().collect(),
-        );
-
-        let objects = objects
-            .into_iter()
-            .map(|object: Sphere| -> Box<dyn Shape> { Box::new(object) })
-            .collect();
-        let world = World::new(objects, vec![]);
+        let s1 = Sphere::builder()
+            .set_frame_transformation(Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)))
+            .wrap();
+        let objects = vec![s1];
+        let group = Group::builder()
+            .set_frame_transformation(Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)))
+            .set_objects(objects)
+            .wrap();
         let ray = Ray::new(Point::new(10.0, 0.0, -10.0), Vector::new(0.0, 0.0, 1.0));
-        let intersections = world.intersect_ray(&ray);
-        println!("{:?}", world.objects[0].transformation_matrix());
-        assert_eq!(intersections.0.len(), 2);
+
+        let shape = group
+            .intersect_ray(&ray, vec![])
+            .finalise_hit()
+            .unwrap()
+            .object();
+        let resulting_shape = Sphere::builder()
+            .set_frame_transformation(Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)))
+            .build();
+        assert_eq!(shape, &resulting_shape as &dyn PrimitiveShape);
     }
 
-    // #[test]
-    // fn convert_point_from_world_to_object_space() {
-    //     let mut s1 = Sphere::default();
-    //     *s1.transformation_matrix_mut() = Transform::new(TransformKind::Translate(5.0, 0.0, 0.0));
-    //     let mut objects = vec![s1];
+    #[test]
+    fn transform_stack_propagates_through_groups() {
+        let s1 = Sphere::builder()
+            .set_frame_transformation(Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)))
+            .wrap();
+        let objects = vec![s1];
 
-    //     let g2 = Group::new(
-    //         Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)),
-    //         objects.iter_mut().collect(),
-    //     );
-    //     let g1 = Group::new::<Group>(
-    //         Transform::new(TransformKind::Rotate(
-    //             Axis::Y,
-    //             Angle::from_radians(std::f64::consts::FRAC_PI_2),
-    //         )),
-    //         vec![],
-    //     );
-    //     g1.borrow_mut().add_object(g2.borrow_mut().deref_mut());
+        let g2 = Group::builder()
+            .set_frame_transformation(Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)))
+            .set_objects(objects)
+            .wrap();
+        let g1 = Group::builder()
+            .set_frame_transformation(Transform::new(TransformKind::Rotate(
+                Axis::Y,
+                Angle::from_radians(std::f64::consts::FRAC_PI_2),
+            )))
+            .set_objects(vec![g2])
+            .build();
+        let ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, -1.0));
 
-    //     let world_point = Point::new(-2.0, 0.0, -10.0);
-    //     let resulting_point = Point::new(0.0, 0.0, -1.0);
-    //     assert_eq!(
-    //         objects[0].world_to_object_point(world_point),
-    //         resulting_point
-    //     );
-    // }
+        let computed_intersect = g1.intersect_ray(&ray, vec![]).finalise_hit().unwrap();
+        let transform_stack = computed_intersect.transform_stack();
+        let t1 = Transform::new(TransformKind::Rotate(
+            Axis::Y,
+            Angle::from_radians(std::f64::consts::FRAC_PI_2),
+        ));
+        let t2 = Transform::new(TransformKind::Scale(2.0, 2.0, 2.0));
+        let t3 = Transform::new(TransformKind::Translate(5.0, 0.0, 0.0));
+        let resulting_transform_stack = vec![&t1, &t2, &t3];
 
-    // #[test]
-    // fn convert_normal_from_object_to_world_space() {
-    //     let mut s1 = Sphere::default();
-    //     *s1.transformation_matrix_mut() = Transform::new(TransformKind::Translate(5.0, 0.0, 0.0));
-    //     let mut objects = vec![s1];
-
-    //     let g2 = Group::new(
-    //         Transform::new(TransformKind::Scale(1.0, 2.0, 3.0)),
-    //         objects.iter_mut().collect(),
-    //     );
-    //     let g1 = Group::new::<Group>(
-    //         Transform::new(TransformKind::Rotate(
-    //             Axis::Y,
-    //             Angle::from_radians(std::f64::consts::FRAC_PI_2),
-    //         )),
-    //         vec![],
-    //     );
-    //     g1.borrow_mut().add_object(g2.borrow_mut().deref_mut());
-
-    //     let local_normal = Vector::new(
-    //         3.0_f64.sqrt() / 3.0,
-    //         3.0_f64.sqrt() / 3.0,
-    //         3.0_f64.sqrt() / 3.0,
-    //     );
-    //     let resulting_normal = Vector::new(0.2857, 0.4286, -0.8571);
-    //     assert_eq!(
-    //         objects[0].normal_to_world_vector(local_normal),
-    //         resulting_normal
-    //     );
-    // }
+        assert_eq!(transform_stack, &resulting_transform_stack);
+    }
 }

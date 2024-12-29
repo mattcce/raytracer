@@ -1,25 +1,16 @@
-use std::cell::RefCell;
-use std::default::Default;
-use std::rc::Rc;
-
 use crate::collections::{Point, Vector};
-use crate::objects::{Group, GroupTransformable, Material, Ray, Shape, Transform};
+use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, ShapeBuilder, Transform};
 use crate::utils::floats::EPSILON;
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Cube {
-    pub transform: Transform,
-    pub material: Material,
-    parent: Option<Rc<RefCell<Group>>>,
+    frame_transformation: Transform,
+    material: Material,
 }
 
 impl Cube {
-    pub fn new(transform: Transform, material: Material) -> Self {
-        Cube {
-            transform,
-            material,
-            parent: None,
-        }
+    pub fn builder() -> ShapeBuilder<Cube> {
+        ShapeBuilder::default()
     }
 
     fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
@@ -44,13 +35,13 @@ impl Cube {
     }
 }
 
-impl Shape for Cube {
-    fn material(&self) -> &Material {
-        &self.material
+impl PrimitiveShape for Cube {
+    fn frame_transformation(&self) -> &Transform {
+        &self.frame_transformation
     }
 
-    fn material_mut(&mut self) -> &mut Material {
-        &mut self.material
+    fn material(&self) -> &Material {
+        &self.material
     }
 
     fn local_normal_at(&self, local_point: Point, _: Option<(f64, f64)>) -> Vector {
@@ -71,7 +62,7 @@ impl Shape for Cube {
         }
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Vec<(f64, Option<(f64, f64)>)> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<Coordinates> {
         let (xtmin, xtmax) = Cube::check_axis(local_ray.origin.x, local_ray.direction.x);
         let (ytmin, ytmax) = Cube::check_axis(local_ray.origin.y, local_ray.direction.y);
         let (ztmin, ztmax) = Cube::check_axis(local_ray.origin.z, local_ray.direction.z);
@@ -82,26 +73,29 @@ impl Shape for Cube {
         if tmin > tmax {
             vec![]
         } else {
-            vec![tmin, tmax].iter().map(|&t| (t, None)).collect()
+            vec![tmin, tmax]
+                .iter()
+                .map(|&t| Coordinates::new(t, None))
+                .collect()
         }
     }
 }
 
-impl GroupTransformable for Cube {
-    fn transformation_matrix(&self) -> &Transform {
-        &self.transform
+impl ShapeBuilder<Cube> {
+    pub fn build(self) -> Cube {
+        let frame_transformation = self.frame_transformation.unwrap_or_default();
+        let material = self.material.unwrap_or_default();
+
+        let cube = Cube {
+            frame_transformation,
+            material,
+        };
+        cube
     }
 
-    fn transformation_matrix_mut(&mut self) -> &mut Transform {
-        &mut self.transform
-    }
-
-    fn parent(&self) -> Option<Rc<RefCell<Group>>> {
-        Option::clone(&self.parent)
-    }
-
-    fn set_parent(&mut self, group: Rc<RefCell<Group>>) {
-        self.parent = Some(group);
+    pub fn wrap(self) -> Shape {
+        let cube = self.build();
+        Shape::wrap_primitive(cube)
     }
 }
 
@@ -112,7 +106,7 @@ mod tests {
 
     #[test]
     fn ray_intersects_cube() {
-        let cube = Cube::default();
+        let cube = Cube::builder().build();
         let test_cases: [(Point, Vector, f64, f64); 7] = [
             (
                 Point::new(5.0, 0.5, 0.0),
@@ -161,14 +155,14 @@ mod tests {
             let ray = Ray::new(origin, direction);
             let t_values = cube.local_intersect(&ray);
             assert_eq!(t_values.len(), 2);
-            assert_eq!(t_values[0].0, t1);
-            assert_eq!(t_values[1].0, t2);
+            assert_eq!(t_values[0].t(), t1);
+            assert_eq!(t_values[1].t(), t2);
         }
     }
 
     #[test]
     fn ray_does_not_intersect_cube() {
-        let cube = Cube::default();
+        let cube = Cube::builder().build();
         let test_cases: [(Point, Vector); 6] = [
             (
                 Point::new(-2.0, 0.0, 0.0),
@@ -194,7 +188,7 @@ mod tests {
 
     #[test]
     fn normal_on_cube() {
-        let cube = Cube::default();
+        let cube = Cube::builder().build();
         let test_cases: [(Point, Vector); 8] = [
             (Point::new(1.0, 0.5, -0.8), Vector::new(1.0, 0.0, 0.0)),
             (Point::new(-1.0, -0.2, 0.9), Vector::new(-1.0, 0.0, 0.0)),

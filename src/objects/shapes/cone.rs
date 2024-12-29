@@ -1,34 +1,35 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use crate::collections::{Point, Vector};
-use crate::objects::{Group, GroupTransformable, Material, Ray, Shape, Transform};
+use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, ShapeBuilder, Transform};
 use crate::utils::EPSILON;
 
 #[derive(Debug)]
 pub struct Cone {
-    pub transform: Transform,
-    pub material: Material,
+    frame_transformation: Transform,
+    material: Material,
     y_minimum: f64,
     closed_bot: bool,
     y_maximum: f64,
     closed_top: bool,
-    parent: Option<Rc<RefCell<Group>>>,
 }
 
 impl Cone {
-    pub fn new(transform: Transform, material: Material, y_minimum: f64, y_maximum: f64) -> Self {
-        let closed_bot = y_minimum > f64::NEG_INFINITY;
-        let closed_top = y_maximum < f64::INFINITY;
+    pub fn builder() -> ShapeBuilder<Cone> {
+        ShapeBuilder::default()
+    }
 
-        Self {
-            transform,
-            material,
-            y_minimum,
-            closed_bot,
-            y_maximum,
-            closed_top,
-            parent: None,
+    pub fn y_minimum(&mut self) -> Option<f64> {
+        if self.closed_bot {
+            None
+        } else {
+            Some(self.y_minimum)
+        }
+    }
+
+    pub fn y_maximum(&mut self) -> Option<f64> {
+        if self.closed_bot {
+            None
+        } else {
+            Some(self.y_maximum)
         }
     }
 
@@ -50,11 +51,11 @@ impl Cone {
         let c = origin_x.powi(2) - origin_y.powi(2) + origin_z.powi(2);
 
         if a.abs() < EPSILON {
-            if b.abs() < EPSILON {
-                return vec![];
+            return if b.abs() < EPSILON {
+                vec![]
             } else {
-                return vec![-c / (2.0 * b)];
-            }
+                vec![-c / (2.0 * b)]
+            };
         }
 
         let disc = b.powi(2) - 4.0 * a * c;
@@ -111,22 +112,22 @@ impl Cone {
     }
 }
 
-impl Shape for Cone {
-    fn material(&self) -> &Material {
-        &self.material
+impl PrimitiveShape for Cone {
+    fn frame_transformation(&self) -> &Transform {
+        &self.frame_transformation
     }
 
-    fn material_mut(&mut self) -> &mut Material {
-        &mut self.material
+    fn material(&self) -> &Material {
+        &self.material
     }
 
     fn local_normal_at(&self, local_point: Point, _: Option<(f64, f64)>) -> Vector {
         let dist = local_point.x.powi(2) + local_point.z.powi(2);
 
-        if dist < 1.0 {
+        if dist < f64::abs(local_point.y) {
             match local_point.y {
-                y if y > self.y_maximum - EPSILON => return Vector::new(0.0, 1.0, 0.0),
-                y if y < self.y_minimum + EPSILON => return Vector::new(0.0, -1.0, 0.0),
+                y if y >= self.y_maximum - EPSILON => return Vector::new(0.0, 1.0, 0.0),
+                y if y <= self.y_minimum + EPSILON => return Vector::new(0.0, -1.0, 0.0),
                 _ => (),
             }
         }
@@ -140,98 +141,113 @@ impl Shape for Cone {
         Vector::new(local_point.x, y, local_point.z)
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Vec<(f64, Option<(f64, f64)>)> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<Coordinates> {
         let mut t_values = vec![];
 
         t_values.extend_from_slice(&self.intersect_walls(local_ray));
         t_values.extend_from_slice(&self.intersect_caps(local_ray));
 
-        t_values.iter().map(|&t| (t, None)).collect()
+        t_values
+            .iter()
+            .map(|&t| Coordinates::new(t, None))
+            .collect()
     }
 }
 
-impl GroupTransformable for Cone {
-    fn transformation_matrix(&self) -> &Transform {
-        &self.transform
+impl ShapeBuilder<Cone> {
+    pub fn set_y_minimum(mut self, y_minimum: f64) -> ShapeBuilder<Cone> {
+        self.y_minimum = Some(y_minimum);
+        self
     }
 
-    fn transformation_matrix_mut(&mut self) -> &mut Transform {
-        &mut self.transform
+    pub fn set_y_maximum(mut self, y_maximum: f64) -> ShapeBuilder<Cone> {
+        self.y_maximum = Some(y_maximum);
+        self
     }
 
-    fn parent(&self) -> Option<Rc<RefCell<Group>>> {
-        Option::clone(&self.parent)
+    pub fn build(self) -> Cone {
+        let frame_transformation = self.frame_transformation.unwrap_or_default();
+        let material = self.material.unwrap_or_default();
+        let (y_minimum, closed_bot) = match self.y_minimum {
+            Some(y_minimum) => (y_minimum, true),
+            None => (f64::NEG_INFINITY, false),
+        };
+        let (y_maximum, closed_top) = match self.y_maximum {
+            Some(y_maximum) => (y_maximum, true),
+            None => (f64::INFINITY, false),
+        };
+
+        let cone = Cone {
+            frame_transformation,
+            material,
+            y_minimum,
+            closed_bot,
+            y_maximum,
+            closed_top,
+        };
+        cone
     }
 
-    fn set_parent(&mut self, group: Rc<RefCell<Group>>) {
-        self.parent = Some(group);
-    }
-}
-
-impl Default for Cone {
-    fn default() -> Self {
-        Self {
-            transform: Transform::default(),
-            material: Material::default(),
-            y_maximum: f64::INFINITY,
-            closed_top: false,
-            y_minimum: f64::NEG_INFINITY,
-            closed_bot: true,
-            parent: None,
-        }
+    pub fn wrap(self) -> Shape {
+        let cone = self.build();
+        Shape::wrap_primitive(cone)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::approx_eq;
 
-    // #[test]
-    // fn ray_intersects_cone() {
-    //     let cone = Cone::default();
-    //     let test_cases: [(Point, Vector, f64, f64); 3] = [
-    //         (
-    //             Point::new(0.0, 0.0, -5.0),
-    //             Vector::new(0.0, 0.0, 1.0),
-    //             5.0,
-    //             5.0,
-    //         ),
-    //         (
-    //             Point::new(0.0, 0.0, -5.0),
-    //             Vector::new(1.0, 1.0, 1.0),
-    //             8.66025,
-    //             8.66025,
-    //         ),
-    //         (
-    //             Point::new(1.0, 1.0, -5.0),
-    //             Vector::new(-0.5, -1.0, 1.0),
-    //             4.55006,
-    //             49.44994,
-    //         ),
-    //     ];
-    //     for (origin, direction, t0, t1) in test_cases {
-    //         let ray = Ray::new(origin, direction.normalise());
-    //         let t_values = cone.local_intersect(&ray);
-    //         assert_eq!(t_values[0], t0);
-    //         assert_eq!(t_values[1], t1);
-    //     }
-    // }
+    #[test]
+    fn ray_intersects_cone() {
+        let cone = Cone::builder().build();
+        let test_cases: [(Point, Vector, f64, f64); 3] = [
+            (
+                Point::new(0.0, 0.0, -5.0),
+                Vector::new(0.0, 0.0, 1.0),
+                5.0,
+                5.0,
+            ),
+            (
+                Point::new(0.0, 0.0, -5.0),
+                Vector::new(1.0, 1.0, 1.0),
+                8.660254,
+                8.660254,
+            ),
+            (
+                Point::new(1.0, 1.0, -5.0),
+                Vector::new(-0.5, -1.0, 1.0),
+                4.550056,
+                49.449944,
+            ),
+        ];
+        for (origin, direction, t0, t1) in test_cases {
+            let ray = Ray::new(origin, direction.normalise());
+            let t_values = cone.local_intersect(&ray);
+            approx_eq!(t_values[0].t(), t0);
+            approx_eq!(t_values[1].t(), t1);
+        }
+    }
 
-    // #[test]
-    // fn ray_intersects_cone_parallel_to_one_half() {
-    //     let cone = Cone::default();
-    //     let ray = Ray::new(
-    //         Point::new(0.0, 0.0, -1.0),
-    //         Vector::new(0.0, 1.0, 1.0).normalise(),
-    //     );
-    //     let t_values = cone.local_intersect(&ray);
-    //     assert_eq!(t_values.len(), 1);
-    //     assert_eq!(t_values[0], 0.35355);
-    // }
+    #[test]
+    fn ray_intersects_cone_parallel_to_one_half() {
+        let cone = Cone::builder().build();
+        let ray = Ray::new(
+            Point::new(0.0, 0.0, -1.0),
+            Vector::new(0.0, 1.0, 1.0).normalise(),
+        );
+        let t_values = cone.local_intersect(&ray);
+        assert_eq!(t_values.len(), 1);
+        approx_eq!(t_values[0].t(), 0.353553);
+    }
 
     #[test]
     fn ray_intersects_caps() {
-        let cone = Cone::new(Transform::default(), Material::default(), -0.5, 0.5);
+        let cone = Cone::builder()
+            .set_y_minimum(-0.5)
+            .set_y_maximum(0.5)
+            .build();
         let test_cases: [(Point, Vector, usize); 3] = [
             (Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 1.0, 0.0), 0),
             (Point::new(0.0, 0.0, -0.25), Vector::new(0.0, 1.0, 1.0), 2),
@@ -246,7 +262,10 @@ mod tests {
 
     #[test]
     fn normal_vector_on_cone() {
-        let cone = Cone::new(Transform::default(), Material::default(), -0.5, 5.0);
+        let cone = Cone::builder()
+            .set_y_minimum(-0.5)
+            .set_y_maximum(5.0)
+            .build();
         let test_cases: [(Point, Vector); 3] = [
             (Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 0.0)),
             (

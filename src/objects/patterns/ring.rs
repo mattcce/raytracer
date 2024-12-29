@@ -19,7 +19,7 @@ impl Ring {
 }
 
 impl Pattern for Ring {
-    fn transformation_matrix(&self) -> &Transform {
+    fn frame_transformation(&self) -> &Transform {
         &self.transform
     }
 

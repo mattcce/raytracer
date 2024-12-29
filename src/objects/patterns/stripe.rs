@@ -20,7 +20,7 @@ impl Stripe {
 }
 
 impl Pattern for Stripe {
-    fn transformation_matrix(&self) -> &Transform {
+    fn frame_transformation(&self) -> &Transform {
         &self.transform
     }
 

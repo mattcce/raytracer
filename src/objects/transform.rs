@@ -1,7 +1,6 @@
 use std::ops::Mul;
 
 use crate::collections::{Angle, Matrix, Tuple4};
-use crate::utils::Preset;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Transform(Matrix);
@@ -73,8 +72,6 @@ impl Default for Transform {
         Transform::new(TransformKind::Identity)
     }
 }
-
-impl Preset for Transform {}
 
 impl From<Matrix> for Transform {
     fn from(matrix: Matrix) -> Transform {
@@ -197,6 +194,7 @@ mod tests {
     use std::f64::consts::FRAC_PI_2 as MATH_FRAC_PI_2;
 
     use crate::collections::{Point, Vector};
+    use crate::utils::approx_eq;
 
     use super::*;
 
@@ -376,41 +374,51 @@ mod tests {
         assert_eq!(transform_z, resulting_transform_z);
     }
 
-    // commented out because tests fail due to floating-point error
-    //
-    // #[test]
-    // fn rotate_point() {
-    //     let r = Angle::from_radians(MATH_FRAC_PI_2);
-    //     let point_x = Point::new(0.0, 1.0, 0.0);
-    //     let point_y = Point::new(0.0, 0.0, 1.0);
-    //     let point_z = Point::new(0.0, 1.0, 0.0);
-    //     let transform_x = Transform::new(TransformKind::Rotate(Axis::X, r));
-    //     let transform_y = Transform::new(TransformKind::Rotate(Axis::Y, r));
-    //     let transform_z = Transform::new(TransformKind::Rotate(Axis::Z, r));
-    //     let resulting_point_x = Point::new(0.0, 0.0, 1.0);
-    //     let resulting_point_y = Point::new(1.0, 0.0, 0.0);
-    //     let resulting_point_z = Point::new(-1.0, 0.0, 0.0);
-    //     assert_eq!(point_x.transform(transform_x), resulting_point_x);
-    //     assert_eq!(point_y.transform(transform_y), resulting_point_y);
-    //     assert_eq!(point_z.transform(transform_z), resulting_point_z);
-    // }
+    #[test]
+    fn rotate_point() {
+        let r = Angle::from_radians(MATH_FRAC_PI_2);
+        let point_x = Point::new(0.0, 1.0, 0.0);
+        let point_y = Point::new(0.0, 0.0, 1.0);
+        let point_z = Point::new(0.0, 1.0, 0.0);
+        let transform_x = Transform::new(TransformKind::Rotate(Axis::X, r));
+        let transform_y = Transform::new(TransformKind::Rotate(Axis::Y, r));
+        let transform_z = Transform::new(TransformKind::Rotate(Axis::Z, r));
+        let resulting_point_x = Point::new(0.0, 0.0, 1.0);
+        let resulting_point_y = Point::new(1.0, 0.0, 0.0);
+        let resulting_point_z = Point::new(-1.0, 0.0, 0.0);
+        approx_eq!(point_x.transform(&transform_x).x, resulting_point_x.x);
+        approx_eq!(point_x.transform(&transform_x).y, resulting_point_x.y);
+        approx_eq!(point_x.transform(&transform_x).z, resulting_point_x.z);
+        approx_eq!(point_y.transform(&transform_y).x, resulting_point_y.x);
+        approx_eq!(point_y.transform(&transform_y).y, resulting_point_y.y);
+        approx_eq!(point_y.transform(&transform_y).z, resulting_point_y.z);
+        approx_eq!(point_z.transform(&transform_z).x, resulting_point_z.x);
+        approx_eq!(point_z.transform(&transform_z).y, resulting_point_z.y);
+        approx_eq!(point_z.transform(&transform_z).z, resulting_point_z.z);
+    }
 
-    // #[test]
-    // fn rotate_vector() {
-    //     let r = Angle::from_radians(MATH_FRAC_PI_2);
-    //     let vector_x = Vector::new(0.0, 1.0, 0.0);
-    //     let vector_y = Vector::new(0.0, 0.0, 1.0);
-    //     let vector_z = Vector::new(0.0, 1.0, 0.0);
-    //     let transform_x = Transform::new(TransformKind::Rotate(Axis::X, r));
-    //     let transform_y = Transform::new(TransformKind::Rotate(Axis::Y, r));
-    //     let transform_z = Transform::new(TransformKind::Rotate(Axis::Z, r));
-    //     let resulting_vector_x = Vector::new(0.0, 0.0, 1.0);
-    //     let resulting_vector_y = Vector::new(1.0, 0.0, 0.0);
-    //     let resulting_vector_z = Vector::new(-1.0, 0.0, 0.0);
-    //     assert_eq!(vector_x.transform(transform_x), resulting_vector_x);
-    //     assert_eq!(vector_y.transform(transform_y), resulting_vector_y);
-    //     assert_eq!(vector_z.transform(transform_z), resulting_vector_z);
-    // }
+    #[test]
+    fn rotate_vector() {
+        let r = Angle::from_radians(MATH_FRAC_PI_2);
+        let vector_x = Vector::new(0.0, 1.0, 0.0);
+        let vector_y = Vector::new(0.0, 0.0, 1.0);
+        let vector_z = Vector::new(0.0, 1.0, 0.0);
+        let transform_x = Transform::new(TransformKind::Rotate(Axis::X, r));
+        let transform_y = Transform::new(TransformKind::Rotate(Axis::Y, r));
+        let transform_z = Transform::new(TransformKind::Rotate(Axis::Z, r));
+        let resulting_vector_x = Vector::new(0.0, 0.0, 1.0);
+        let resulting_vector_y = Vector::new(1.0, 0.0, 0.0);
+        let resulting_vector_z = Vector::new(-1.0, 0.0, 0.0);
+        approx_eq!(vector_x.transform(&transform_x).x, resulting_vector_x.x);
+        approx_eq!(vector_x.transform(&transform_x).y, resulting_vector_x.y);
+        approx_eq!(vector_x.transform(&transform_x).z, resulting_vector_x.z);
+        approx_eq!(vector_y.transform(&transform_y).x, resulting_vector_y.x);
+        approx_eq!(vector_y.transform(&transform_y).y, resulting_vector_y.y);
+        approx_eq!(vector_y.transform(&transform_y).z, resulting_vector_y.z);
+        approx_eq!(vector_z.transform(&transform_z).x, resulting_vector_z.x);
+        approx_eq!(vector_z.transform(&transform_z).y, resulting_vector_z.y);
+        approx_eq!(vector_z.transform(&transform_z).z, resulting_vector_z.z);
+    }
 
     #[test]
     fn create_shearing_transform() {

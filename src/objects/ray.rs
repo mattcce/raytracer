@@ -1,7 +1,5 @@
 use crate::collections::{Point, Vector};
-use crate::objects::Shape;
 
-use super::Intersections;
 use super::{Transform, Transformable};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -18,12 +16,6 @@ impl Ray {
     pub fn position(&self, t: f64) -> Point {
         self.origin + t * self.direction
     }
-}
-
-pub trait Intersectable {
-    fn intersect<'a>(&'a self, ray: &'a Ray) -> Intersections<'a, Self>
-    where
-        Self: Shape;
 }
 
 impl Transformable for Ray {

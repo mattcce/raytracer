@@ -67,7 +67,7 @@ mod tests {
     }
 
     #[test]
-    fn accessors_angle_from_degrees() {
+    fn access_angle_from_degrees() {
         let mut angle = Angle::from_degrees(145.0);
         let resulting_angle = Angle {
             degrees: Some(145.0),
@@ -78,7 +78,7 @@ mod tests {
     }
 
     #[test]
-    fn accessors_angle_from_radians() {
+    fn access_angle_from_radians() {
         let mut angle = Angle::from_radians(2.0);
         let resulting_angle = Angle {
             degrees: Some(2.0 * (180.0 / MATH_PI)),

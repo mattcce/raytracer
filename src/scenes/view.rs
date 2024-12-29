@@ -1,5 +1,5 @@
 use crate::collections::{Angle, Matrix, Point, Vector};
-use crate::objects::{Ray, Transform, TransformKind, Transformable};
+use crate::objects::*;
 use crate::scenes::WriteError;
 use crate::scenes::{Canvas, Height, Width, World};
 
@@ -109,7 +109,7 @@ impl Camera {
         for pos_y in 0..self.vsize {
             for pos_x in 0..self.hsize {
                 let ray = self.map_ray(pos_x, pos_y);
-                let colour = world.cast_ray(&ray);
+                let colour = world.cast_ray(ray);
                 image.paint_colour(pos_x, pos_y, colour)?;
             }
         }
@@ -123,7 +123,6 @@ mod tests {
 
     use crate::collections::Colour;
     use crate::scenes::Pixel;
-    use crate::utils::Preset;
 
     use super::*;
 
@@ -256,7 +255,23 @@ mod tests {
 
     #[test]
     fn render_world() {
-        let world = World::preset();
+        let s1 = Sphere::builder()
+            .set_material(Material {
+                pattern: Box::new(Solid::new(Colour::new(0.8, 1.0, 0.6))),
+                diffuse: 0.7,
+                specular: 0.2,
+                ..Material::preset()
+            })
+            .wrap();
+        let s2 = Sphere::builder()
+            .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
+            .set_material(Material::preset())
+            .wrap();
+        let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
+        let world = World {
+            objects: vec![s1, s2],
+            lights: vec![light],
+        };
         let camera = Camera::new(
             11,
             11,

@@ -140,7 +140,6 @@ impl From<Matrix> for Vector {
     fn from(matrix: Matrix) -> Self {
         assert_eq!(matrix.rows(), 4);
         assert_eq!(matrix.cols(), 1);
-        // assert_eq!(matrix[[3, 0]], 0.0);
 
         Vector::new(matrix[[0, 0]], matrix[[1, 0]], matrix[[2, 0]])
     }
@@ -149,17 +148,7 @@ impl From<Matrix> for Vector {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn create_vector() {
-        let vector_new = Vector::new(1.0, 2.0, 3.0);
-        let vector_direct = Vector {
-            x: 1.0,
-            y: 2.0,
-            z: 3.0,
-        };
-        assert_eq!(vector_new, vector_direct);
-    }
+    use crate::utils::floats::approx_eq;
 
     #[test]
     fn create_zero_vector() {
@@ -271,24 +260,19 @@ mod tests {
         assert_eq!(Vector::from(matrix), vector);
     }
 
-    // #[test]
-    // #[should_panic]
-    // fn non_column_matrix_to_vector() {
-    //     let vector = Vector::new(1.0, 5.0, 2.0);
-    //     let mut matrix = Matrix::from(vector);
-    //     matrix[[3, 0]] = 10.0;
-    //     assert_eq!(Vector::from(matrix), vector);
-    // }
-
     #[test]
     fn reflect_vector() {
         let vector1 = Vector::new(1.0, -1.0, 0.0);
-        let _vector2 = Vector::new(0.0, -1.0, 0.0);
+        let vector2 = Vector::new(0.0, -1.0, 0.0);
         let normal1 = Vector::new(0.0, 1.0, 0.0);
-        let _normal2 = Vector::new(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0);
+        let normal2 = Vector::new(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0);
         let resulting_vector1 = Vector::new(1.0, 1.0, 0.0);
-        let _resulting_vector2 = Vector::new(1.0, 0.0, 0.0);
+        let resulting_vector2 = Vector::new(1.0, 0.0, 0.0);
         assert_eq!(vector1.reflect(normal1), resulting_vector1);
-        // assert_eq!(vector2.reflect(normal2), resulting_vector2);
+
+        let vector2_reflected = vector2.reflect(normal2);
+        approx_eq!(vector2_reflected.x, resulting_vector2.x);
+        approx_eq!(vector2_reflected.y, resulting_vector2.y);
+        approx_eq!(vector2_reflected.z, resulting_vector2.z);
     }
 }

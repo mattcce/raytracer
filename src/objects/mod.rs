@@ -1,4 +1,3 @@
-pub mod boundary;
 pub mod group;
 pub mod intersections;
 pub mod light;
@@ -9,7 +8,6 @@ pub mod shapes;
 pub mod transform;
 
 // crate-level re-exports
-pub(crate) use boundary::*;
 pub(crate) use group::*;
 pub(crate) use intersections::*;
 pub(crate) use light::*;
@@ -25,9 +23,9 @@ pub(super) mod prelude {
     pub use super::shapes::prelude::*;
 
     pub use super::group::Group;
-    pub use super::intersections::{ComputedIntersect, Intersections, RawIntersect};
+    pub use super::intersections::{Coordinates, HitRegister, Intersect};
     pub use super::light::Light;
     pub use super::material::Material;
-    pub use super::ray::{Intersectable, Ray};
+    pub use super::ray::Ray;
     pub use super::transform::{Axis, Transform, TransformKind};
 }

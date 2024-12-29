@@ -1,69 +1,48 @@
-use std::cell::RefCell;
-use std::default::Default;
-use std::rc::Rc;
-
 use crate::collections::{Point, Vector};
-use crate::objects::{Group, GroupTransformable, Material, Ray, Shape, Transform};
+use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, ShapeBuilder, Transform};
 use crate::utils::EPSILON;
 
 #[derive(Debug)]
 pub struct Triangle {
-    pub transform: Transform,
-    pub material: Material,
-    parent: Option<Rc<RefCell<Group>>>,
-    pub(crate) vertices: [Point; 3],
+    frame_transformation: Transform,
+    material: Material,
+    vertices: [Point; 3],
     edges: [Vector; 2],
     normal: Vector,
 }
 
 impl Triangle {
-    pub fn new(v1: Point, v2: Point, v3: Point) -> Triangle {
-        let e1 = v2 - v1;
-        let e2 = v3 - v1;
-        let normal = e2.cross(e1).normalise();
-        Triangle {
-            transform: Transform::default(),
-            material: Material::default(),
-            parent: None,
-            vertices: [v1, v2, v3],
-            edges: [e1, e2],
-            normal,
-        }
+    pub fn builder() -> ShapeBuilder<Triangle> {
+        ShapeBuilder::default()
+    }
+
+    pub fn vertices(&self) -> [Point; 3] {
+        self.vertices
+    }
+
+    pub fn edges(&self) -> [Vector; 2] {
+        self.edges
+    }
+
+    pub fn normal(&self) -> Vector {
+        self.normal
     }
 }
 
-impl GroupTransformable for Triangle {
-    fn transformation_matrix(&self) -> &Transform {
-        &self.transform
+impl PrimitiveShape for Triangle {
+    fn frame_transformation(&self) -> &Transform {
+        &self.frame_transformation
     }
 
-    fn transformation_matrix_mut(&mut self) -> &mut Transform {
-        &mut self.transform
-    }
-
-    fn parent(&self) -> Option<Rc<RefCell<Group>>> {
-        Option::clone(&self.parent)
-    }
-
-    fn set_parent(&mut self, group: Rc<RefCell<Group>>) {
-        self.parent = Some(group);
-    }
-}
-
-impl Shape for Triangle {
     fn material(&self) -> &Material {
         &self.material
-    }
-
-    fn material_mut(&mut self) -> &mut Material {
-        &mut self.material
     }
 
     fn local_normal_at(&self, _local_point: Point, _: Option<(f64, f64)>) -> Vector {
         self.normal
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Vec<(f64, Option<(f64, f64)>)> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<Coordinates> {
         let dir_cross_e2 = local_ray.direction.cross(self.edges[1]);
         let det = self.edges[0].dot(dir_cross_e2);
         if det.abs() < EPSILON {
@@ -84,7 +63,36 @@ impl Shape for Triangle {
         }
 
         let t = f * self.edges[1].dot(origin_cross_e1);
-        vec![t].iter().map(|&t| (t, None)).collect()
+        vec![t].iter().map(|&t| Coordinates::new(t, None)).collect()
+    }
+}
+
+impl ShapeBuilder<Triangle> {
+    pub fn set_vertices(mut self, vertices: [Point; 3]) -> ShapeBuilder<Triangle> {
+        self.vertices = Some(vertices);
+        self
+    }
+
+    pub fn build(self) -> Triangle {
+        let frame_transformation = self.frame_transformation.unwrap_or_default();
+        let material = self.material.unwrap_or_default();
+        let [v1, v2, v3] = self.vertices.unwrap();
+        let e1 = v2 - v1;
+        let e2 = v3 - v1;
+        let normal = e2.cross(e1).normalise();
+        let triangle = Triangle {
+            frame_transformation,
+            material,
+            vertices: [v1, v2, v3],
+            edges: [e1, e2],
+            normal,
+        };
+        triangle
+    }
+
+    pub fn wrap(self) -> Shape {
+        let triangle = self.build();
+        Shape::wrap_primitive(triangle)
     }
 }
 
@@ -94,58 +102,63 @@ mod tests {
 
     #[test]
     fn intersect_ray_parallel_to_triangle() {
-        let triangle = Triangle::new(
+        let vertices = [
             Point::new(0.0, 1.0, 0.0),
             Point::new(-1.0, 0.0, 0.0),
             Point::new(1.0, 0.0, 0.0),
-        );
+        ];
+        let triangle = Triangle::builder().set_vertices(vertices).build();
         let ray = Ray::new(Point::new(0.0, -1.0, -2.0), Vector::new(0.0, 1.0, 0.0));
         assert_eq!(triangle.local_intersect(&ray).len(), 0);
     }
 
     #[test]
     fn ray_misses_p1_p3_edge() {
-        let triangle = Triangle::new(
+        let vertices = [
             Point::new(0.0, 1.0, 0.0),
             Point::new(-1.0, 0.0, 0.0),
             Point::new(1.0, 0.0, 0.0),
-        );
+        ];
+        let triangle = Triangle::builder().set_vertices(vertices).build();
         let ray = Ray::new(Point::new(1.0, 1.0, -2.0), Vector::new(0.0, 0.0, 1.0));
         assert_eq!(triangle.local_intersect(&ray).len(), 0);
     }
 
     #[test]
     fn ray_misses_p1_p2_edge() {
-        let triangle = Triangle::new(
+        let vertices = [
             Point::new(0.0, 1.0, 0.0),
             Point::new(-1.0, 0.0, 0.0),
             Point::new(1.0, 0.0, 0.0),
-        );
+        ];
+        let triangle = Triangle::builder().set_vertices(vertices).build();
         let ray = Ray::new(Point::new(-1.0, 1.0, -2.0), Vector::new(0.0, 0.0, 1.0));
         assert_eq!(triangle.local_intersect(&ray).len(), 0);
     }
 
     #[test]
     fn ray_misses_p2_p3_edge() {
-        let triangle = Triangle::new(
+        let vertices = [
             Point::new(0.0, 1.0, 0.0),
             Point::new(-1.0, 0.0, 0.0),
             Point::new(1.0, 0.0, 0.0),
-        );
+        ];
+        let triangle = Triangle::builder().set_vertices(vertices).build();
         let ray = Ray::new(Point::new(0.0, -1.0, -2.0), Vector::new(0.0, 0.0, 1.0));
         assert_eq!(triangle.local_intersect(&ray).len(), 0);
     }
 
     #[test]
     fn ray_intersects_triangle() {
-        let triangle = Triangle::new(
+        let vertices = [
             Point::new(0.0, 1.0, 0.0),
             Point::new(-1.0, 0.0, 0.0),
             Point::new(1.0, 0.0, 0.0),
-        );
+        ];
+        let triangle = Triangle::builder().set_vertices(vertices).build();
         let ray = Ray::new(Point::new(0.0, 0.5, -2.0), Vector::new(0.0, 0.0, 1.0));
         let t_values = triangle.local_intersect(&ray);
         assert_eq!(t_values.len(), 1);
-        assert_eq!(t_values[0].0, 2.0);
+        assert_eq!(t_values[0].t(), 2.0);
     }
 }

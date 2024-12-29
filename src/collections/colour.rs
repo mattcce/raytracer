@@ -74,17 +74,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn create_colour() {
-        let colour_new = Colour::new(0.5, 0.5, 0.5);
-        let colour_direct = Colour {
-            red: 0.5,
-            green: 0.5,
-            blue: 0.5,
-        };
-        assert_eq!(colour_new, colour_direct);
-    }
-
-    #[test]
     fn add_two_colours() {
         let colour1 = Colour::new(0.9, 0.6, 0.7);
         let colour2 = Colour::new(0.7, 0.1, 1.0);

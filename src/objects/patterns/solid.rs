@@ -1,6 +1,5 @@
 use crate::collections::{Colour, Point};
 use crate::objects::{Pattern, Transform};
-use crate::utils::Preset;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Solid {
@@ -15,14 +14,19 @@ impl Solid {
             transform: Transform::default(),
         }
     }
+
+    pub(crate) fn preset() -> Solid {
+        Solid::new(Colour::new(1.0, 1.0, 1.0))
+    }
 }
 
 impl Pattern for Solid {
     fn colour_at(&self, _pattern_point: Point) -> Colour {
+        // force instant return since no calculation is actually needed
         self.colour
     }
 
-    fn transformation_matrix(&self) -> &Transform {
+    fn frame_transformation(&self) -> &Transform {
         &self.transform
     }
 
@@ -34,12 +38,6 @@ impl Pattern for Solid {
 impl Default for Solid {
     fn default() -> Solid {
         Solid::new(Colour::new(0.0, 0.0, 0.0))
-    }
-}
-
-impl Preset for Solid {
-    fn preset() -> Solid {
-        Solid::new(Colour::new(1.0, 1.0, 1.0))
     }
 }
 

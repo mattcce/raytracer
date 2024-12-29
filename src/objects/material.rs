@@ -1,5 +1,4 @@
 use crate::objects::{Pattern, Solid};
-use crate::utils::Preset;
 
 #[derive(Debug)]
 pub struct Material {
@@ -41,8 +40,8 @@ impl Default for Material {
     }
 }
 
-impl Preset for Material {
-    fn preset() -> Material {
+impl Material {
+    pub fn preset() -> Material {
         Material {
             pattern: Box::new(Solid::preset()),
             ambient: 0.1,

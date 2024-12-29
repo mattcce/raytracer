@@ -3,9 +3,9 @@ use raytracer::prelude::*;
 #[test]
 #[ignore]
 fn raycast_sphere() {
-    let sphere = Sphere::preset();
+    let sphere = Sphere::builder().set_material(Material::preset()).wrap();
     let light = Light::new(Point::new(10.0, 10.0, 10.0), Colour::new(1.0, 1.0, 1.0));
-    let world = World::new(vec![Box::new(sphere)], vec![Box::new(light)]);
+    let world = World::new(vec![sphere], vec![light]);
     let camera = Camera::new(
         100,
         100,
@@ -26,76 +26,76 @@ fn raycast_sphere() {
 #[test]
 #[ignore]
 fn raycast_scene() {
-    let floor = Sphere::new(
-        Transform::new(TransformKind::Scale(10.0, 0.01, 10.0)),
-        Material {
+    let floor = Sphere::builder()
+        .set_frame_transformation(Transform::new(TransformKind::Scale(10.0, 0.01, 10.0)))
+        .set_material(Material {
             pattern: Box::new(Solid::new(Colour::new(1.0, 0.9, 0.9))),
             specular: 0.0,
             ..Material::preset()
-        },
-    );
-    let left_wall = Sphere::new(
-        Transform::from(vec![
+        })
+        .wrap();
+    let left_wall = Sphere::builder()
+        .set_frame_transformation(Transform::from(vec![
             TransformKind::Scale(10.0, 0.01, 10.0),
             TransformKind::Rotate(Axis::X, Angle::from_radians(std::f64::consts::FRAC_PI_2)),
             TransformKind::Rotate(Axis::Y, Angle::from_radians(-std::f64::consts::FRAC_PI_4)),
             TransformKind::Translate(0.0, 0.0, 5.0),
-        ]),
-        Material::preset(),
-    );
-    let right_wall = Sphere::new(
-        Transform::from(vec![
+        ]))
+        .set_material(Material::preset())
+        .wrap();
+    let right_wall = Sphere::builder()
+        .set_frame_transformation(Transform::from(vec![
             TransformKind::Scale(10.0, 0.01, 10.0),
             TransformKind::Rotate(Axis::X, Angle::from_radians(std::f64::consts::FRAC_PI_2)),
             TransformKind::Rotate(Axis::Y, Angle::from_radians(std::f64::consts::FRAC_PI_4)),
             TransformKind::Translate(0.0, 0.0, 5.0),
-        ]),
-        Material::preset(),
-    );
-    let middle_sphere = Sphere::new(
-        Transform::new(TransformKind::Translate(-0.5, 1.0, 0.5)),
-        Material {
+        ]))
+        .set_material(Material::preset())
+        .wrap();
+    let middle_sphere = Sphere::builder()
+        .set_frame_transformation(Transform::new(TransformKind::Translate(-0.5, 1.0, 0.5)))
+        .set_material(Material {
             pattern: Box::new(Solid::new(Colour::new(0.1, 1.0, 0.5))),
             diffuse: 0.7,
             specular: 0.3,
             ..Material::preset()
-        },
-    );
-    let right_sphere = Sphere::new(
-        Transform::from(vec![
+        })
+        .wrap();
+    let right_sphere = Sphere::builder()
+        .set_frame_transformation(Transform::from(vec![
             TransformKind::Scale(0.5, 0.5, 0.5),
             TransformKind::Translate(1.5, 0.5, -0.5),
-        ]),
-        Material {
+        ]))
+        .set_material(Material {
             pattern: Box::new(Solid::new(Colour::new(0.1, 1.0, 0.5))),
             diffuse: 0.7,
             specular: 0.3,
             ..Material::preset()
-        },
-    );
-    let left_sphere = Sphere::new(
-        Transform::from(vec![
+        })
+        .wrap();
+    let left_sphere = Sphere::builder()
+        .set_frame_transformation(Transform::from(vec![
             TransformKind::Scale(0.33, 0.33, 0.33),
             TransformKind::Translate(-1.5, 0.33, -0.75),
-        ]),
-        Material {
+        ]))
+        .set_material(Material {
             pattern: Box::new(Solid::new(Colour::new(1.0, 0.8, 0.1))),
             diffuse: 0.7,
             specular: 0.3,
             ..Material::preset()
-        },
-    );
+        })
+        .wrap();
     let light_source = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
     let world = World::new(
         vec![
-            Box::new(floor),
-            Box::new(left_wall),
-            Box::new(right_wall),
-            Box::new(middle_sphere),
-            Box::new(right_sphere),
-            Box::new(left_sphere),
+            floor,
+            left_wall,
+            right_wall,
+            middle_sphere,
+            right_sphere,
+            left_sphere,
         ],
-        vec![Box::new(light_source)],
+        vec![light_source],
     );
     let camera = Camera::new(
         100,

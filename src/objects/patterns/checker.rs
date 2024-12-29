@@ -19,7 +19,7 @@ impl Checker {
 }
 
 impl Pattern for Checker {
-    fn transformation_matrix(&self) -> &Transform {
+    fn frame_transformation(&self) -> &Transform {
         &self.transform
     }
 

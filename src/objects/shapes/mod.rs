@@ -3,7 +3,7 @@ pub mod cube;
 pub mod cylinder;
 pub mod plane;
 pub mod shape;
-pub mod smoothtriangle;
+pub mod smooth_triangle;
 pub mod sphere;
 pub mod triangle;
 
@@ -13,7 +13,7 @@ pub(crate) use cube::*;
 pub(crate) use cylinder::*;
 pub(crate) use plane::*;
 pub(crate) use shape::*;
-pub(crate) use smoothtriangle::*;
+pub(crate) use smooth_triangle::*;
 pub(crate) use sphere::*;
 pub(crate) use triangle::*;
 
@@ -24,7 +24,7 @@ pub(super) mod prelude {
     pub use super::cylinder::Cylinder;
     pub use super::plane::Plane;
     pub use super::shape::Shape;
-    pub use super::smoothtriangle::SmoothTriangle;
+    pub use super::smooth_triangle::SmoothTriangle;
     pub use super::sphere::Sphere;
     pub use super::triangle::Triangle;
 }

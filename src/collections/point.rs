@@ -81,7 +81,6 @@ impl From<Matrix> for Point {
     fn from(matrix: Matrix) -> Self {
         assert_eq!(matrix.rows(), 4);
         assert_eq!(matrix.cols(), 1);
-        // assert_eq!(matrix[[3, 0]], 1.0);
 
         Point::new(matrix[[0, 0]], matrix[[1, 0]], matrix[[2, 0]])
     }
@@ -90,17 +89,6 @@ impl From<Matrix> for Point {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn create_point() {
-        let point_new = Point::new(2.0, 3.0, 4.0);
-        let point_direct = Point {
-            x: 2.0,
-            y: 3.0,
-            z: 4.0,
-        };
-        assert_eq!(point_new, point_direct);
-    }
 
     #[test]
     fn create_zero_origin() {
@@ -157,13 +145,4 @@ mod tests {
         let matrix = Matrix::from(point);
         assert_eq!(Point::from(matrix), point);
     }
-
-    // #[test]
-    // #[should_panic]
-    // fn non_column_matrix_to_point() {
-    //     let point = Point::new(1.0, 5.0, 2.0);
-    //     let mut matrix = Matrix::from(point);
-    //     matrix[[3, 0]] = 10.0;
-    //     assert_eq!(Point::from(matrix), point);
-    // }
 }

@@ -19,7 +19,7 @@ impl Gradient {
 }
 
 impl Pattern for Gradient {
-    fn transformation_matrix(&self) -> &Transform {
+    fn frame_transformation(&self) -> &Transform {
         &self.transform
     }
 

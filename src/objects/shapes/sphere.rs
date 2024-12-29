@@ -1,89 +1,77 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use crate::collections::{Point, Vector};
 use crate::objects::*;
-use crate::utils::Preset;
+use crate::utils::EPSILON;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, PartialEq)]
 pub struct Sphere {
-    pub transform: Transform,
-    pub material: Material,
-    parent: Option<Rc<RefCell<Group>>>,
+    frame_transformation: Transform,
+    material: Material,
 }
 
 impl Sphere {
-    pub fn new(transform: Transform, material: Material) -> Sphere {
-        Sphere {
-            transform,
-            material,
-            parent: None,
-        }
+    pub fn builder() -> ShapeBuilder<Sphere> {
+        ShapeBuilder::default()
     }
 }
 
-impl Shape for Sphere {
-    fn material(&self) -> &Material {
-        &self.material
+impl PrimitiveShape for Sphere {
+    fn frame_transformation(&self) -> &Transform {
+        &self.frame_transformation
     }
 
-    fn material_mut(&mut self) -> &mut Material {
-        &mut self.material
+    fn material(&self) -> &Material {
+        &self.material
     }
 
     fn local_normal_at(&self, local_point: Point, _: Option<(f64, f64)>) -> Vector {
         local_point - Point::new(0.0, 0.0, 0.0)
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Vec<(f64, Option<(f64, f64)>)> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<Coordinates> {
         let sphere_to_ray = local_ray.origin - Point::zero();
         let a = local_ray.direction.dot(local_ray.direction);
         let b = 2.0 * local_ray.direction.dot(sphere_to_ray);
         let c = sphere_to_ray.dot(sphere_to_ray) - 1.0;
-        let discriminant = b.powf(2.0) - 4.0 * a * c;
-        let sqrt_discriminant = discriminant.sqrt();
+        let discriminant = b.powi(2) - 4.0 * a * c;
 
-        if sqrt_discriminant.is_nan() {
+        if discriminant < 0.0 {
             vec![]
         } else {
+            let sqrt_discriminant = discriminant.sqrt();
             let t1 = (-b - sqrt_discriminant) / (2.0 * a);
             let t2 = (-b + sqrt_discriminant) / (2.0 * a);
-            vec![t1, t2].iter().map(|&t| (t, None)).collect()
+            vec![t1, t2]
+                .iter()
+                .map(|&t| Coordinates::new(t, None))
+                .collect()
         }
     }
 }
 
-impl GroupTransformable for Sphere {
-    fn transformation_matrix(&self) -> &Transform {
-        &self.transform
+impl ShapeBuilder<Sphere> {
+    pub fn build(self) -> Sphere {
+        let frame_transformation = self.frame_transformation.unwrap_or_default();
+        let material = self.material.unwrap_or_default();
+
+        let sphere = Sphere {
+            frame_transformation,
+            material,
+        };
+        sphere
     }
 
-    fn transformation_matrix_mut(&mut self) -> &mut Transform {
-        &mut self.transform
-    }
-
-    fn parent(&self) -> Option<Rc<RefCell<Group>>> {
-        Option::clone(&self.parent)
-    }
-
-    fn set_parent(&mut self, group: Rc<RefCell<Group>>) {
-        self.parent = Some(group);
-    }
-}
-
-impl Preset for Sphere {
-    fn preset() -> Sphere {
-        Sphere {
-            transform: Transform::preset(),
-            material: Material::preset(),
-            parent: None,
-        }
+    pub fn wrap(self) -> Shape {
+        let sphere = self.build();
+        Shape::wrap_primitive(sphere)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::collections::Angle;
+    use crate::objects::Axis;
+    use crate::utils::approx_eq;
 
     #[test]
     fn normal_on_unit_sphere() {
@@ -104,102 +92,98 @@ mod tests {
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
         );
-        assert_eq!(sphere.normal_at(point1, None), normal1);
-        assert_eq!(sphere.normal_at(point2, None), normal2);
-        assert_eq!(sphere.normal_at(point3, None), normal3);
-        assert_eq!(sphere.normal_at(point4, None), normal4);
+        assert_eq!(sphere.normal_at(point1, None, &vec![]), normal1);
+        assert_eq!(sphere.normal_at(point2, None, &vec![]), normal2);
+        assert_eq!(sphere.normal_at(point3, None, &vec![]), normal3);
+        assert_eq!(sphere.normal_at(point4, None, &vec![]), normal4);
     }
 
-    // use crate::collections::Angle;
-    // use crate::objects::Axis;
-    //
-    // #[test]
-    // fn normal_on_transformed_sphere() {
-    //     let transform1 = Transform::new(TransformKind::Translate(0.0, 1.0, 0.0));
-    //     let transform2 = Transform::from(vec![
-    //         TransformKind::Rotate(Axis::Z, Angle::from_radians(std::f64::consts::PI / 5.0)),
-    //         TransformKind::Scale(1.0, 0.5, 1.0),
-    //     ]);
-    //     let sphere1 = Sphere {
-    //         transform: transform1,
-    //         ..Sphere::default()
-    //     };
-    //     let sphere2 = Sphere {
-    //         transform: transform2,
-    //         ..Sphere::default()
-    //     };
-    //     let point1 = Point::new(0.0, 1.0 + 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
-    //     let point2 = Point::new(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
-    //     let normal1 = Vector::new(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
-    //     let normal2 = Vector::new(0.0, 0.97014, -0.24254);
-    //     assert_eq!(sphere1.normal_at(point1), normal1);
-    //, _: Option<(f64, f64)>     assert_eq!(sphere2.normal_at(point2), normal2);
-    //, _: Option<(f64, f64)> }
+    #[test]
+    fn normal_on_transformed_sphere() {
+        let transform1 = Transform::new(TransformKind::Translate(0.0, 1.0, 0.0));
+        let transform2 = Transform::from(vec![
+            TransformKind::Rotate(Axis::Z, Angle::from_radians(std::f64::consts::PI / 5.0)),
+            TransformKind::Scale(1.0, 0.5, 1.0),
+        ]);
+        let sphere1 = Sphere::builder()
+            .set_frame_transformation(transform1)
+            .build();
+        let sphere2 = Sphere::builder()
+            .set_frame_transformation(transform2)
+            .build();
+        let point1 = Point::new(0.0, 1.0 + 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
+        let point2 = Point::new(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
+        let normal1 = sphere1.normal_at(point1, None, &vec![sphere1.frame_transformation()]);
+        let normal2 = sphere1.normal_at(point2, None, &vec![sphere2.frame_transformation()]);
+        let resulting_normal1 = Vector::new(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
+        let resulting_normal2 = Vector::new(0.0, 0.970143, -0.242535);
+        approx_eq!(normal1.x, resulting_normal1.x);
+        approx_eq!(normal1.y, resulting_normal1.y);
+        approx_eq!(normal1.z, resulting_normal1.z);
+        approx_eq!(normal2.x, resulting_normal2.x);
+        approx_eq!(normal2.y, resulting_normal2.y);
+        approx_eq!(normal2.z, resulting_normal2.z);
+    }
 
     #[test]
     fn ray_intersects_sphere_at_two_points() {
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::default();
-        let intersections = sphere.intersect(&ray);
-        assert_eq!(intersections[0].t, 4.0);
-        assert_eq!(intersections[1].t, 6.0);
+        let sphere = Sphere::builder().build();
+        let hit_register = sphere.intersect_ray(&ray, vec![]);
+        assert_eq!(hit_register.finalise_hit().unwrap().t(), 4.0);
     }
 
     #[test]
     fn ray_intersects_sphere_at_a_tangent() {
         let ray = Ray::new(Point::new(0.0, 1.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::default();
-        let intersections = sphere.intersect(&ray);
-        assert_eq!(intersections[0].t, 5.0);
-        assert_eq!(intersections[1].t, 5.0);
+        let sphere = Sphere::builder().build();
+        let hit_register = sphere.intersect_ray(&ray, vec![]);
+        assert_eq!(hit_register.finalise_hit().unwrap().t(), 5.0);
     }
 
     #[test]
     fn ray_does_not_intersect_sphere() {
         let ray = Ray::new(Point::new(0.0, 2.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::default();
-        let intersections = sphere.intersect(&ray);
-        assert_eq!(intersections.0.len(), 0);
+        let sphere = Sphere::builder().build();
+        let hit_register = sphere.intersect_ray(&ray, vec![]);
+        assert!(hit_register.finalise_hit().is_none());
     }
 
     #[test]
     fn ray_originates_within_sphere() {
         let ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::default();
-        let intersections = sphere.intersect(&ray);
-        assert_eq!(intersections[0].t, -1.0);
-        assert_eq!(intersections[1].t, 1.0);
+        let sphere = Sphere::builder().build();
+        let hit_register = sphere.intersect_ray(&ray, vec![]);
+        assert_eq!(hit_register.finalise_hit().unwrap().t(), 1.0);
     }
 
     #[test]
     fn ray_originates_after_sphere() {
         let ray = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::default();
-        let intersections = sphere.intersect(&ray);
-        assert_eq!(intersections[0].t, -6.0);
-        assert_eq!(intersections[1].t, -4.0);
+        let sphere = Sphere::builder().build();
+        let hit_register = sphere.intersect_ray(&ray, vec![]);
+        assert!(hit_register.finalise_hit().is_none());
     }
 
     #[test]
     fn ray_intersects_transformed_sphere() {
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere {
-            transform: Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)),
-            ..Sphere::default()
-        };
-        let intersections = sphere.intersect(&ray);
-        assert_eq!(intersections[0].t, 3.0);
-        assert_eq!(intersections[1].t, 7.0);
+        let transform = Transform::new(TransformKind::Scale(2.0, 2.0, 2.0));
+        let sphere = Sphere::builder()
+            .set_frame_transformation(transform)
+            .build();
+        let hit_register = sphere.intersect_ray(&ray, vec![]);
+        assert_eq!(hit_register.finalise_hit().unwrap().t(), 3.0);
     }
 
     #[test]
     fn ray_does_not_intersect_transformed_sphere() {
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere {
-            transform: Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)),
-            ..Sphere::default()
-        };
-        let intersections = sphere.intersect(&ray);
-        assert_eq!(intersections.0.len(), 0);
+        let transform = Transform::new(TransformKind::Translate(5.0, 0.0, 0.0));
+        let sphere = Sphere::builder()
+            .set_frame_transformation(transform)
+            .build();
+        let hit_register = sphere.intersect_ray(&ray, vec![]);
+        assert!(hit_register.finalise_hit().is_none());
     }
 }
