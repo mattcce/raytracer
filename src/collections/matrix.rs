@@ -121,12 +121,12 @@ impl Matrix {
         }
     }
 
-    pub fn submatrix(&self, [row, col]: Idx) -> Matrix {
+    pub fn submatrix(&self, [sm_row, sm_col]: Idx) -> Matrix {
         let mut submatrix = self.matrix.clone();
 
-        submatrix.remove(row);
+        submatrix.remove(sm_row);
         submatrix.iter_mut().for_each(|row| {
-            row.remove(col);
+            row.remove(sm_col);
             row.shrink_to_fit();
         });
 
@@ -147,6 +147,24 @@ impl Matrix {
         } else {
             -self.minor(index)
         }
+    }
+
+    pub fn invert(&self) -> Matrix {
+        let (rows, cols) = (self.rows, self.cols);
+        // panics if determinant is uncomputable (non-square matrix), checked by .det() method
+        let det = self.det();
+        assert_ne!(det, 0.0);
+
+        let mut inverse_matrix = Matrix::new(rows, cols);
+
+        for i in 0..rows {
+            for j in 0..cols {
+                // implicit transpose
+                inverse_matrix[[j, i]] = self.cofactor([i, j]) / det;
+            }
+        }
+
+        inverse_matrix
     }
 }
 
@@ -318,6 +336,21 @@ mod tests {
             vec![1.0, 2.0, -9.0, 6.0],
             vec![-6.0, 7.0, 7.0, -9.0],
         ]);
-        assert_eq!(matrix.det(), -4071.0)
+        assert_eq!(matrix.cofactor([0, 0]), 690.0);
+        assert_eq!(matrix.cofactor([0, 1]), 447.0);
+        assert_eq!(matrix.cofactor([0, 2]), 210.0);
+        assert_eq!(matrix.cofactor([0, 3]), 51.0);
+        assert_eq!(matrix.det(), -4071.0);
+    }
+
+    #[test]
+    fn inverse_of_identity_matrix() {
+        let matrix = Matrix::from(&vec![
+            vec![1.0, 0.0, 0.0, 0.0],
+            vec![0.0, 1.0, 0.0, 0.0],
+            vec![0.0, 0.0, 1.0, 0.0],
+            vec![0.0, 0.0, 0.0, 1.0],
+        ]);
+        assert_eq!(matrix.invert(), matrix);
     }
 }
