@@ -15,6 +15,14 @@ struct Projectile {
     velocity: Vector,
 }
 
+impl Scene {
+    fn tick(&mut self) {
+        let mut projectile = &mut self.projectile;
+        projectile.position = projectile.position + projectile.velocity;
+        projectile.velocity = projectile.velocity + self.gravity + self.wind;
+    }
+}
+
 fn main() {
     let projectile1 = Projectile {
         position: Point::new(0.0, 100.0, 0.0),
@@ -33,13 +41,5 @@ fn main() {
             scene1.projectile.position, scene1.projectile.velocity
         );
         thread::sleep(time::Duration::from_millis(100));
-    }
-}
-
-impl Scene {
-    fn tick(&mut self) {
-        let mut projectile = &mut self.projectile;
-        projectile.position = projectile.position + projectile.velocity;
-        projectile.velocity = projectile.velocity + self.gravity + self.wind;
     }
 }
