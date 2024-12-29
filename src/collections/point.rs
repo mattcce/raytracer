@@ -67,6 +67,17 @@ mod tests {
     use super::*;
 
     #[test]
+    fn create_point() {
+        let point_new = Point::new(2.0, 3.0, 4.0);
+        let point_direct = Point {
+            x: 2.0,
+            y: 3.0,
+            z: 4.0,
+        };
+        assert_eq!(point_new, point_direct);
+    }
+
+    #[test]
     fn add_point_and_vector() {
         let point = Point::new(1.0, 2.0, 3.0);
         let vector = Vector::new(5.0, 6.0, 7.0);

@@ -122,6 +122,17 @@ mod tests {
     use super::*;
 
     #[test]
+    fn create_vector() {
+        let vector_new = Vector::new(1.0, 2.0, 3.0);
+        let vector_direct = Vector {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+        };
+        assert_eq!(vector_new, vector_direct);
+    }
+
+    #[test]
     fn add_two_vectors() {
         let vector1 = Vector::new(4.5, 3.5, 6.0);
         let vector2 = Vector::new(1.5, 2.5, 6.5);
