@@ -32,6 +32,7 @@ impl Matrix {
 }
 
 impl From<&Vec<Vec<f64>>> for Matrix {
+    // does not consume the vector and requires cloning
     fn from(vec2d: &Vec<Vec<f64>>) -> Self {
         let rows = vec2d.len();
         assert_ne!(rows, 0);
@@ -41,6 +42,7 @@ impl From<&Vec<Vec<f64>>> for Matrix {
         let cols = vec2d[0].len();
         assert_ne!(rows, 0);
 
+        // as we need to check row lengths anyway, we can clone while we're are it
         for row in vec2d {
             assert_eq!(row.len(), cols);
             matrix.push(row.clone());
