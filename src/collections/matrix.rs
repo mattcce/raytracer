@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::ops::{Index, IndexMut};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -5,6 +6,13 @@ pub struct Matrix {
     rows: usize,
     cols: usize,
     matrix: Vec<Vec<f64>>,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum MatrixConstructionError {
+    RaggedVec,
+    NoRows,
+    NoCols,
 }
 
 impl Matrix {
@@ -18,6 +26,33 @@ impl Matrix {
             matrix.push(row);
         }
         Matrix { rows, cols, matrix }
+    }
+}
+
+impl TryFrom<Vec<Vec<f64>>> for Matrix {
+    type Error = MatrixConstructionError;
+
+    fn try_from(vec2d: Vec<Vec<f64>>) -> Result<Matrix, MatrixConstructionError> {
+        let rows = vec2d.len();
+        if rows == 0 {
+            return Err(MatrixConstructionError::NoRows);
+        }
+
+        let mut matrix = Vec::with_capacity(rows);
+
+        let cols = vec2d[0].len();
+        if cols == 0 {
+            return Err(MatrixConstructionError::NoCols);
+        }
+
+        for row in vec2d {
+            if row.len() != cols {
+                return Err(MatrixConstructionError::RaggedVec);
+            }
+            matrix.push(row.clone());
+        }
+
+        Ok(Matrix { rows, cols, matrix })
     }
 }
 
@@ -40,7 +75,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn create_matrix() {
+    fn create_new_matrix() {
         let matrix = Matrix::new(3, 5);
         let stored_matrix = vec![
             vec![0.0, 0.0, 0.0, 0.0, 0.0],
@@ -61,5 +96,23 @@ mod tests {
         assert_eq!(matrix[[2, 1]], 0.0);
         matrix[[2, 3]] = 64.0;
         assert_eq!(matrix[[2, 3]], 64.0);
+    }
+
+    #[test]
+    fn create_matrix_from_2d_vec() {
+        let array = vec![vec![1.0, 2.0], vec![3.0, 4.0], vec![5.0, 6.0]];
+        let resulting_matrix = Matrix {
+            rows: 3,
+            cols: 2,
+            matrix: vec![vec![1.0, 2.0], vec![3.0, 4.0], vec![5.0, 6.0]],
+        };
+        assert_eq!(Matrix::try_from(array).unwrap(), resulting_matrix);
+    }
+
+    #[test]
+    fn create_matrix_from_ragged_2d_vec() {
+        let array = vec![vec![1.0, 2.0], vec![3.0, 4.0, 5.0], vec![6.0]];
+        let result = Matrix::try_from(array);
+        assert_eq!(result, Err(MatrixConstructionError::RaggedVec));
     }
 }
