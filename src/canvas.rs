@@ -218,10 +218,10 @@ mod tests {
             .unwrap();
         let output_buffer = b"P3\n2 2\n255\n255 255 255 0 0 0\n0 0 0 128 128 128\n".to_vec();
 
-        canvas.output_to_ppm("output.ppm").unwrap();
+        canvas.output_to_ppm("test.ppm").unwrap();
 
         let mut read_buffer = Vec::new();
-        File::open("output.ppm")
+        File::open("test.ppm")
             .unwrap()
             .read_to_end(&mut read_buffer)
             .unwrap();
@@ -229,6 +229,6 @@ mod tests {
         assert_eq!(read_buffer, output_buffer);
 
         // cleanup
-        std::fs::remove_file("output.ppm").unwrap();
+        std::fs::remove_file("test.ppm").unwrap();
     }
 }
