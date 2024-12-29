@@ -19,7 +19,7 @@ impl Ray {
     }
 
     pub fn intersect<'a>(&'a self, s: &'a Sphere) -> Option<Intersections<'a>> {
-        let transformed_ray = self.transform(&s.transform().invert());
+        let transformed_ray = self.transform(&s.transform.invert());
         let sphere_to_ray = transformed_ray.origin - Point::zero();
         let a = transformed_ray.direction.dot(transformed_ray.direction);
         let b = 2.0 * transformed_ray.direction.dot(sphere_to_ray);
@@ -78,7 +78,7 @@ mod tests {
     #[test]
     fn ray_intersects_sphere_at_two_points() {
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::new();
+        let sphere = Sphere::default();
         let intersections = ray.intersect(&sphere).unwrap();
         assert_eq!(intersections[0].t(), 4.0);
         assert_eq!(intersections[1].t(), 6.0);
@@ -87,7 +87,7 @@ mod tests {
     #[test]
     fn ray_intersects_sphere_at_a_tangent() {
         let ray = Ray::new(Point::new(0.0, 1.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::new();
+        let sphere = Sphere::default();
         let intersections = ray.intersect(&sphere).unwrap();
         assert_eq!(intersections[0].t(), 5.0);
         assert_eq!(intersections[1].t(), 5.0);
@@ -96,7 +96,7 @@ mod tests {
     #[test]
     fn ray_does_not_intersect_sphere() {
         let ray = Ray::new(Point::new(0.0, 2.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::new();
+        let sphere = Sphere::default();
         let intersections = ray.intersect(&sphere);
         assert_eq!(intersections, None);
     }
@@ -104,7 +104,7 @@ mod tests {
     #[test]
     fn ray_originates_within_sphere() {
         let ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::new();
+        let sphere = Sphere::default();
         let intersections = ray.intersect(&sphere).unwrap();
         assert_eq!(intersections[0].t(), -1.0);
         assert_eq!(intersections[1].t(), 1.0);
@@ -113,7 +113,7 @@ mod tests {
     #[test]
     fn ray_originates_after_sphere() {
         let ray = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::new();
+        let sphere = Sphere::default();
         let intersections = ray.intersect(&sphere).unwrap();
         assert_eq!(intersections[0].t(), -6.0);
         assert_eq!(intersections[1].t(), -4.0);
@@ -122,7 +122,10 @@ mod tests {
     #[test]
     fn ray_intersects_transformed_sphere() {
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::from(&Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)));
+        let sphere = Sphere {
+            transform: Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)),
+            ..Sphere::default()
+        };
         let intersections = ray.intersect(&sphere).unwrap();
         assert_eq!(intersections[0].t(), 3.0);
         assert_eq!(intersections[1].t(), 7.0);
@@ -131,7 +134,10 @@ mod tests {
     #[test]
     fn ray_does_not_intersect_transformed_sphere() {
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::from(&Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)));
+        let sphere = Sphere {
+            transform: Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)),
+            ..Sphere::default()
+        };
         let intersections = ray.intersect(&sphere);
         assert_eq!(intersections, None);
     }

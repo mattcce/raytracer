@@ -66,7 +66,7 @@ mod tests {
 
     #[test]
     fn create_intersect() {
-        let sphere = Sphere::new();
+        let sphere = Sphere::default();
         let intersect = Intersect::new(1.0, &sphere);
         let resulting_intersect = Intersect {
             t: 1.0,
@@ -78,7 +78,7 @@ mod tests {
 
     #[test]
     fn create_intersections() {
-        let sphere = Sphere::new();
+        let sphere = Sphere::default();
         let intersect1 = Intersect::new(1.0, &sphere);
         let intersect2 = Intersect::new(2.0, &sphere);
         let intersect3 = Intersect::new(3.0, &sphere);
@@ -95,7 +95,7 @@ mod tests {
 
     #[test]
     fn add_intersections() {
-        let sphere = Sphere::new();
+        let sphere = Sphere::default();
         let intersect1 = Intersect::new(1.0, &sphere);
         let intersect2 = Intersect::new(2.0, &sphere);
         let intersect3 = Intersect::new(3.0, &sphere);
@@ -111,7 +111,7 @@ mod tests {
 
     #[test]
     fn intersections_hit() {
-        let sphere = Sphere::new();
+        let sphere = Sphere::default();
         let intersect1 = Intersect::new(-1.0, &sphere);
         let intersect2 = Intersect::new(2.0, &sphere);
         let intersect3 = Intersect::new(3.0, &sphere);

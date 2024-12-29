@@ -1,22 +1,14 @@
 use crate::collections::{Point, Vector};
+use crate::material::Material;
 use crate::transform::{Transform, TransformKind, Transformable};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Sphere {
-    transform: Transform,
+    pub transform: Transform,
+    pub material: Material,
 }
 
 impl Sphere {
-    pub fn new() -> Sphere {
-        Sphere {
-            transform: Transform::new(TransformKind::Identity),
-        }
-    }
-
-    pub fn transform(&self) -> &Transform {
-        &self.transform
-    }
-
     pub fn normal_at(&self, world_point: Point) -> Vector {
         let object_point = world_point.transform(&self.transform.invert());
         let object_normal = object_point - Point::new(0.0, 0.0, 0.0);
@@ -25,18 +17,11 @@ impl Sphere {
     }
 }
 
-impl From<&Transform> for Sphere {
-    fn from(transform: &Transform) -> Self {
+impl Default for Sphere {
+    fn default() -> Self {
         Sphere {
-            transform: transform.clone(),
-        }
-    }
-}
-
-impl Transformable for Sphere {
-    fn transform(self, transform: &Transform) -> Self {
-        Sphere {
-            transform: self.transform.compose(transform),
+            transform: Transform::new(TransformKind::Identity),
+            material: Material::default(),
         }
     }
 }
@@ -48,37 +33,18 @@ mod tests {
     use crate::transform::Axis;
 
     #[test]
-    fn create_sphere() {
-        let sphere = Sphere::new();
+    fn create_default_sphere() {
+        let sphere = Sphere::default();
         let resulting_sphere = Sphere {
             transform: Transform::new(TransformKind::Identity),
-        };
-        assert_eq!(sphere, resulting_sphere);
-    }
-
-    #[test]
-    fn create_sphere_from_transform() {
-        let transform = Transform::new(TransformKind::Translate(5.0, 0.0, 0.0));
-        let sphere = Sphere::from(&transform);
-        let resulting_sphere = Sphere {
-            transform: Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)),
-        };
-        assert_eq!(sphere, resulting_sphere);
-    }
-
-    #[test]
-    fn transform_sphere() {
-        let transform = Transform::new(TransformKind::Scale(1.0, 1.0, 5.0));
-        let sphere = Sphere::new().transform(&transform);
-        let resulting_sphere = Sphere {
-            transform: Transform::new(TransformKind::Scale(1.0, 1.0, 5.0)),
+            material: Material::default(),
         };
         assert_eq!(sphere, resulting_sphere);
     }
 
     #[test]
     fn normal_on_unit_sphere() {
-        let sphere = Sphere::new();
+        let sphere = Sphere::default();
         let point1 = Point::new(1.0, 0.0, 0.0);
         let point2 = Point::new(0.0, 1.0, 0.0);
         let point3 = Point::new(0.0, 0.0, 1.0);
@@ -103,11 +69,19 @@ mod tests {
 
     // #[test]
     // fn normal_on_transformed_sphere() {
-    //     let sphere1 = Sphere::from(&Transform::new(TransformKind::Translate(0.0, 1.0, 0.0)));
-    //     let sphere2 = Sphere::from(&Transform::from(vec![
+    //     let transform1 = Transform::new(TransformKind::Translate(0.0, 1.0, 0.0));
+    //     let transform2 = Transform::from(vec![
     //         TransformKind::Rotate(Axis::Z, Angle::from_radians(std::f64::consts::PI / 5.0)),
     //         TransformKind::Scale(1.0, 0.5, 1.0),
-    //     ]));
+    //     ]);
+    //     let sphere1 = Sphere {
+    //         transform: transform1,
+    //         ..Sphere::default()
+    //     };
+    //     let sphere2 = Sphere {
+    //         transform: transform2,
+    //         ..Sphere::default()
+    //     };
     //     let point1 = Point::new(0.0, 1.0 + 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
     //     let point2 = Point::new(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
     //     let normal1 = Vector::new(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
