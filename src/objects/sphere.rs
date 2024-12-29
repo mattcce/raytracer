@@ -29,8 +29,6 @@ impl Default for Sphere {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::collections::Angle;
-    use crate::objects::Axis;
 
     #[test]
     fn create_default_sphere() {
@@ -67,6 +65,9 @@ mod tests {
         assert_eq!(sphere.normal_at(point4), normal4);
     }
 
+    // use crate::collections::Angle;
+    // use crate::objects::Axis;
+    //
     // #[test]
     // fn normal_on_transformed_sphere() {
     //     let transform1 = Transform::new(TransformKind::Translate(0.0, 1.0, 0.0));
