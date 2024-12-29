@@ -2,7 +2,7 @@ use std::ops::Index;
 
 use crate::collections::{Colour, Point, Vector};
 use crate::utils::floats::EPSILON;
-use crate::utils::Shape;
+use crate::objects::Shape;
 
 use super::Light;
 use super::Ray;

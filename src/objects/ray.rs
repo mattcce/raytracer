@@ -1,5 +1,5 @@
 use crate::collections::{Point, Vector};
-use crate::utils::Shape;
+use crate::objects::Shape;
 
 use super::{Transform, Transformable};
 use super::Intersections;

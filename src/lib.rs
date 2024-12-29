@@ -14,7 +14,7 @@ pub mod prelude {
 /*
     # Re-exports and `use` organisation
 
-    All 'mod.rs' files should only contain re-exports and module declarations.
+    All 'shapes' files should only contain re-exports and module declarations.
 
     All non-terminal modules must have preludes.
 
@@ -53,9 +53,9 @@ pub mod prelude {
     submodules (that is, submodules that do not have sub-submodules).
 
     In general, a name like crate::module::submodule::Name should be re-
-    exported as crate::module::Name in src/module/mod.rs.
+    exported as crate::module::Name in src/module/shapes.
 
-    In src/module/mod.rs, bring all nested names into scope using
+    In src/module/shapes, bring all nested names into scope using
         `pub(crate) use submodule::*`.
 
     Submodules within the same parent module should bring names into scope using

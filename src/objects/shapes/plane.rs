@@ -1,8 +1,8 @@
 use std::default::Default;
 
 use crate::collections::{Point, Vector};
-use crate::objects::{Material, Ray, Transform};
-use crate::utils::{EPSILON, LocallyIntersectable, Preset, Shape};
+use crate::objects::{Material, Ray, Transform, Shape, LocallyIntersectable};
+use crate::utils::{EPSILON, Preset};
 
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct Plane {

@@ -1,6 +1,6 @@
 use crate::collections::*;
 use crate::objects::*;
-use crate::utils::{Preset, Shape};
+use crate::utils::{Preset};
 
 #[derive(Default, Debug)]
 pub struct World {

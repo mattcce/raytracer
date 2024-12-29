@@ -1,7 +1,8 @@
 use crate::collections::{Point, Vector};
-use crate::utils::{LocallyIntersectable, Preset, Shape};
+use crate::utils::Preset;
+use crate::objects::{LocallyIntersectable, Shape};
 
-use super::*;
+use crate::objects::*;
 
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct Sphere {
