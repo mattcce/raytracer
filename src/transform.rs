@@ -28,8 +28,8 @@ impl Transform {
         Transform(matrix)
     }
 
-    pub fn invert(transform: Transform) -> Transform {
-        Transform(transform.0.invert())
+    pub fn invert(&self) -> Transform {
+        Transform(self.0.invert())
     }
 }
 
@@ -118,6 +118,14 @@ mod tests {
         let point = Point::new(-3.0, 4.0, 5.0);
         let transform = Transform::new(TransformKind::Translate(5.0, -3.0, 2.0));
         let resulting_point = Point::new(2.0, 1.0, 7.0);
+        assert_eq!(point.transform(transform), resulting_point);
+    }
+
+    #[test]
+    fn invert_translation() {
+        let point = Point::new(-3.0, 4.0, 5.0);
+        let transform = Transform::new(TransformKind::Translate(5.0, -3.0, 2.0)).invert();
+        let resulting_point = Point::new(-8.0, 7.0, 3.0);
         assert_eq!(point.transform(transform), resulting_point);
     }
 
