@@ -1,4 +1,5 @@
-use crate::collections::matrix::Matrix;
+use crate::collections::{Matrix, Point, Tuple4, Vector};
+use std::ops::Mul;
 
 const IDENTITY: [[f64; 4]; 4] = [
     [1.0, 0.0, 0.0, 0.0],
@@ -12,15 +13,23 @@ pub struct Transform(Matrix);
 
 pub enum TransformKind {
     Identity,
-    Translation(f64, f64, f64),
+    Translate(f64, f64, f64),
 }
 
 impl Transform {
     pub fn new(transform_kind: TransformKind) -> Transform {
         match transform_kind {
             TransformKind::Identity => Transform::identity(),
-            TransformKind::Translation(x, y, z) => Transform::translate(x, y, z),
+            TransformKind::Translate(x, y, z) => Transform::translate(x, y, z),
         }
+    }
+
+    pub fn from(matrix: Matrix) -> Transform {
+        Transform(matrix)
+    }
+
+    pub fn invert(transform: Transform) -> Transform {
+        Transform(transform.0.invert())
     }
 }
 
@@ -43,6 +52,25 @@ impl Transform {
     }
 }
 
+impl Mul<&Matrix> for Transform {
+    type Output = Matrix;
+
+    fn mul(self, other: &Matrix) -> Self::Output {
+        self.0 * other
+    }
+}
+
+pub trait Transformable<T> {
+    // transform is consuming because it accepts Tuple4 types which are Copy
+    fn transform(self, transform: Transform) -> T;
+}
+
+impl<T: Tuple4 + From<Matrix>> Transformable<T> for T {
+    fn transform(self, transform: Transform) -> T {
+        T::from(transform.clone() * &Matrix::from(self))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -60,8 +88,22 @@ mod tests {
     }
 
     #[test]
+    fn identity_transform_point() {
+        let point = Point::new(1.0, 2.0, 3.0);
+        let transform = Transform::new(TransformKind::Identity);
+        assert_eq!(point.transform(transform), point);
+    }
+
+    #[test]
+    fn identity_transform_vector() {
+        let vector = Vector::new(1.0, 2.0, 3.0);
+        let transform = Transform::new(TransformKind::Identity);
+        assert_eq!(vector.transform(transform), vector);
+    }
+
+    #[test]
     fn create_translation_transform() {
-        let transform = Transform::new(TransformKind::Translation(5.0, -3.0, 2.0));
+        let transform = Transform::new(TransformKind::Translate(5.0, -3.0, 2.0));
         let resulting_transform = Transform(Matrix::from(&vec![
             vec![1.0, 0.0, 0.0, 5.0],
             vec![0.0, 1.0, 0.0, -3.0],
@@ -69,5 +111,20 @@ mod tests {
             vec![0.0, 0.0, 0.0, 1.0],
         ]));
         assert_eq!(transform, resulting_transform);
+    }
+
+    #[test]
+    fn translate_point() {
+        let point = Point::new(-3.0, 4.0, 5.0);
+        let transform = Transform::new(TransformKind::Translate(5.0, -3.0, 2.0));
+        let resulting_point = Point::new(2.0, 1.0, 7.0);
+        assert_eq!(point.transform(transform), resulting_point);
+    }
+
+    #[test]
+    fn translate_vector() {
+        let vector = Vector::new(5.0, -3.0, 2.0);
+        let transform = Transform::new(TransformKind::Translate(5.0, -3.0, 2.0));
+        assert_eq!(vector.transform(transform), vector);
     }
 }

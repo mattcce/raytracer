@@ -83,7 +83,7 @@ impl Mul<&Matrix> for Matrix {
     }
 }
 
-pub trait Tuple4 {
+pub trait Tuple4: Copy + From<Matrix> {
     fn to_tuple4(self) -> [f64; 4];
 }
 
