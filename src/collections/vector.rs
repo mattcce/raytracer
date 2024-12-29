@@ -103,6 +103,18 @@ impl Vector {
             z: self.z / magnitude,
         }
     }
+
+    pub fn dot(self, other: Vector) -> f64 {
+        (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
+    }
+
+    pub fn cross(self, other: Vector) -> Vector {
+        Vector {
+            x: (self.y * other.z) - (self.z * other.y),
+            y: (self.z * other.x) - (self.x * other.z),
+            z: (self.x * other.y) - (self.y * other.x),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -176,5 +188,21 @@ mod tests {
         let vector = Vector::new(2.0, 3.0, 6.0);
         let resulting_vector = Vector::new(2.0 / 7.0, 3.0 / 7.0, 6.0 / 7.0);
         assert_eq!(vector.normalise(), resulting_vector);
+    }
+
+    #[test]
+    fn dot_product_two_vectors() {
+        let vector1 = Vector::new(1.0, 2.0, 3.0);
+        let vector2 = Vector::new(2.0, 3.0, 4.0);
+        let resulting_value = 20.0_f64;
+        assert_eq!(vector1.dot(vector2), resulting_value);
+    }
+
+    #[test]
+    fn cross_product_two_vectors() {
+        let vector1 = Vector::new(2.0, 3.0, 4.0);
+        let vector2 = Vector::new(1.0, 2.0, 3.0);
+        let resulting_vector = Vector::new(1.0, -2.0, 1.0);
+        assert_eq!(vector1.cross(vector2), resulting_vector);
     }
 }
