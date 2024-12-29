@@ -117,7 +117,7 @@ impl Shape for Cylinder {
         &mut self.material
     }
 
-    fn local_normal_at(&self, local_point: Point) -> Vector {
+    fn local_normal_at(&self, local_point: Point, _: Option<(f64, f64)>) -> Vector {
         let dist = local_point.x.powi(2) + local_point.z.powi(2);
 
         if dist < 1.0 {
@@ -131,13 +131,13 @@ impl Shape for Cylinder {
         Vector::new(local_point.x, 0.0, local_point.z)
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<(f64, Option<(f64, f64)>)> {
         let mut t_values = vec![];
 
         t_values.extend_from_slice(&self.intersect_walls(local_ray));
         t_values.extend_from_slice(&self.intersect_caps(local_ray));
 
-        t_values
+        t_values.iter().map(|&t| (t, None)).collect()
     }
 }
 
@@ -216,7 +216,7 @@ mod tests {
     //     ];
     //     for (origin, direction, t0, t1) in test_cases {
     //         let ray = Ray::new(origin, direction.normalise());
-    //         let t_values = cylinder.local_intersect(&ray);
+    //         let t_values = cylinder, _: Option<(f64, f64)>.local_intersect(&ray);
     //         assert_eq!(t_values.len(), 2);
     //         assert_eq!(t_values[0], t0);
     //         assert_eq!(t_values[1], t1);
@@ -233,7 +233,7 @@ mod tests {
             (Point::new(-1.0, 1.0, 0.0), Vector::new(-1.0, 0.0, 0.0)),
         ];
         for (point, normal) in test_cases {
-            assert_eq!(cylinder.local_normal_at(point), normal);
+            assert_eq!(cylinder.local_normal_at(point, None), normal);
         }
     }
 
@@ -281,7 +281,7 @@ mod tests {
             (Point::new(0.0, 2.0, 0.5), Vector::new(0.0, 1.0, 0.0)),
         ];
         for (point, normal) in test_cases {
-            assert_eq!(cylinder.local_normal_at(point), normal);
+            assert_eq!(cylinder.local_normal_at(point, None), normal);
         }
     }
 }

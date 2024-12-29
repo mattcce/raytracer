@@ -32,17 +32,17 @@ impl Shape for Plane {
         &mut self.material
     }
 
-    fn local_normal_at(&self, _local_point: Point) -> Vector {
+    fn local_normal_at(&self, _local_point: Point, _: Option<(f64, f64)>) -> Vector {
         Vector::new(0.0, 1.0, 0.0)
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<(f64, Option<(f64, f64)>)> {
         if local_ray.direction.y.abs() < EPSILON {
             return vec![];
         }
 
         let t = -local_ray.origin.y / local_ray.direction.y;
-        vec![t]
+        vec![t].iter().map(|&t| (t, None)).collect()
     }
 }
 
@@ -80,9 +80,9 @@ mod tests {
     #[test]
     fn normal_of_plane() {
         let default_plane = Plane::default();
-        let normal1 = default_plane.normal_at(Point::new(0.0, 0.0, 0.0));
-        let normal2 = default_plane.normal_at(Point::new(10.0, 0.0, -10.0));
-        let normal3 = default_plane.normal_at(Point::new(-5.0, 0.0, 150.0));
+        let normal1 = default_plane.normal_at(Point::new(0.0, 0.0, 0.0), None);
+        let normal2 = default_plane.normal_at(Point::new(10.0, 0.0, -10.0), None);
+        let normal3 = default_plane.normal_at(Point::new(-5.0, 0.0, 150.0), None);
         let resulting_vector = Vector::new(0.0, 1.0, 0.0);
         assert_eq!(normal1, resulting_vector);
         assert_eq!(normal2, resulting_vector);

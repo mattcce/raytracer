@@ -59,11 +59,11 @@ impl Shape for Triangle {
         &mut self.material
     }
 
-    fn local_normal_at(&self, _local_point: Point) -> Vector {
+    fn local_normal_at(&self, _local_point: Point, _: Option<(f64, f64)>) -> Vector {
         self.normal
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<(f64, Option<(f64, f64)>)> {
         let dir_cross_e2 = local_ray.direction.cross(self.edges[1]);
         let det = self.edges[0].dot(dir_cross_e2);
         if det.abs() < EPSILON {
@@ -84,7 +84,7 @@ impl Shape for Triangle {
         }
 
         let t = f * self.edges[1].dot(origin_cross_e1);
-        vec![t]
+        vec![t].iter().map(|&t| (t, None)).collect()
     }
 }
 
@@ -146,6 +146,6 @@ mod tests {
         let ray = Ray::new(Point::new(0.0, 0.5, -2.0), Vector::new(0.0, 0.0, 1.0));
         let t_values = triangle.local_intersect(&ray);
         assert_eq!(t_values.len(), 1);
-        assert_eq!(t_values[0], 2.0);
+        assert_eq!(t_values[0].0, 2.0);
     }
 }

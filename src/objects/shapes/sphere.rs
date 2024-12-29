@@ -31,11 +31,11 @@ impl Shape for Sphere {
         &mut self.material
     }
 
-    fn local_normal_at(&self, local_point: Point) -> Vector {
+    fn local_normal_at(&self, local_point: Point, _: Option<(f64, f64)>) -> Vector {
         local_point - Point::new(0.0, 0.0, 0.0)
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<(f64, Option<(f64, f64)>)> {
         let sphere_to_ray = local_ray.origin - Point::zero();
         let a = local_ray.direction.dot(local_ray.direction);
         let b = 2.0 * local_ray.direction.dot(sphere_to_ray);
@@ -48,7 +48,7 @@ impl Shape for Sphere {
         } else {
             let t1 = (-b - sqrt_discriminant) / (2.0 * a);
             let t2 = (-b + sqrt_discriminant) / (2.0 * a);
-            vec![t1, t2]
+            vec![t1, t2].iter().map(|&t| (t, None)).collect()
         }
     }
 }
@@ -104,10 +104,10 @@ mod tests {
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
         );
-        assert_eq!(sphere.normal_at(point1), normal1);
-        assert_eq!(sphere.normal_at(point2), normal2);
-        assert_eq!(sphere.normal_at(point3), normal3);
-        assert_eq!(sphere.normal_at(point4), normal4);
+        assert_eq!(sphere.normal_at(point1, None), normal1);
+        assert_eq!(sphere.normal_at(point2, None), normal2);
+        assert_eq!(sphere.normal_at(point3, None), normal3);
+        assert_eq!(sphere.normal_at(point4, None), normal4);
     }
 
     // use crate::collections::Angle;
@@ -133,8 +133,8 @@ mod tests {
     //     let normal1 = Vector::new(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
     //     let normal2 = Vector::new(0.0, 0.97014, -0.24254);
     //     assert_eq!(sphere1.normal_at(point1), normal1);
-    //     assert_eq!(sphere2.normal_at(point2), normal2);
-    // }
+    //, _: Option<(f64, f64)>     assert_eq!(sphere2.normal_at(point2), normal2);
+    //, _: Option<(f64, f64)> }
 
     #[test]
     fn ray_intersects_sphere_at_two_points() {

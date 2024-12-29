@@ -53,7 +53,7 @@ impl Shape for Cube {
         &mut self.material
     }
 
-    fn local_normal_at(&self, local_point: Point) -> Vector {
+    fn local_normal_at(&self, local_point: Point, _: Option<(f64, f64)>) -> Vector {
         let maxc = [
             local_point.x.abs(),
             local_point.y.abs(),
@@ -71,7 +71,7 @@ impl Shape for Cube {
         }
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<(f64, Option<(f64, f64)>)> {
         let (xtmin, xtmax) = Cube::check_axis(local_ray.origin.x, local_ray.direction.x);
         let (ytmin, ytmax) = Cube::check_axis(local_ray.origin.y, local_ray.direction.y);
         let (ztmin, ztmax) = Cube::check_axis(local_ray.origin.z, local_ray.direction.z);
@@ -82,7 +82,7 @@ impl Shape for Cube {
         if tmin > tmax {
             vec![]
         } else {
-            vec![tmin, tmax]
+            vec![tmin, tmax].iter().map(|&t| (t, None)).collect()
         }
     }
 }
@@ -161,8 +161,8 @@ mod tests {
             let ray = Ray::new(origin, direction);
             let t_values = cube.local_intersect(&ray);
             assert_eq!(t_values.len(), 2);
-            assert_eq!(t_values[0], t1);
-            assert_eq!(t_values[1], t2);
+            assert_eq!(t_values[0].0, t1);
+            assert_eq!(t_values[1].0, t2);
         }
     }
 
@@ -206,7 +206,7 @@ mod tests {
             (Point::new(-1.0, -1.0, -1.0), Vector::new(-1.0, 0.0, 0.0)),
         ];
         for (point, normal) in test_cases {
-            assert_eq!(cube.local_normal_at(point), normal);
+            assert_eq!(cube.local_normal_at(point, None), normal);
         }
     }
 }

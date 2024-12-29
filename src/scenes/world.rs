@@ -296,7 +296,7 @@ mod tests {
             vec![Box::new(light)],
         );
         let ray = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
-        let raw_intersect = RawIntersect::new(4.0, &s2, &ray);
+        let raw_intersect = RawIntersect::new(4.0, &s2, &ray, None);
         let computed_intersect = raw_intersect.precompute();
         let resulting_colour = Colour::new(0.1, 0.1, 0.1);
         assert_eq!(
@@ -317,7 +317,7 @@ mod tests {
         shape.material_mut().ambient = -1.0;
 
         let shape = world.objects[1].as_ref();
-        let raw_intersect = RawIntersect::new(-1.0, shape, &ray);
+        let raw_intersect = RawIntersect::new(-1.0, shape, &ray, None);
         let computed_intersect = raw_intersect.precompute();
         let resulting_colour = Colour::new(0.0, 0.0, 0.0);
         assert_eq!(
@@ -444,8 +444,8 @@ mod tests {
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let resulting_colour = Colour::new(0.0, 0.0, 0.0);
         let intersections = Intersections::new(vec![
-            RawIntersect::new(4.0, shape, &ray),
-            RawIntersect::new(6.0, shape, &ray),
+            RawIntersect::new(4.0, shape, &ray, None),
+            RawIntersect::new(6.0, shape, &ray, None),
         ]);
         let computed_intersect = intersections.hit().unwrap().precompute();
         assert_eq!(
@@ -468,8 +468,8 @@ mod tests {
             Vector::new(0.0, 1.0, 0.0),
         );
         let intersections = Intersections::new(vec![
-            RawIntersect::new(-2.0_f64.sqrt() / 2.0, shape, &ray),
-            RawIntersect::new(2.0_f64.sqrt() / 2.0, shape, &ray),
+            RawIntersect::new(-2.0_f64.sqrt() / 2.0, shape, &ray, None),
+            RawIntersect::new(2.0_f64.sqrt() / 2.0, shape, &ray, None),
         ]);
         let computed_intersect = intersections[1].precompute();
         let resulting_colour = Colour::new(0.0, 0.0, 0.0);

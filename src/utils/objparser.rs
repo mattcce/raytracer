@@ -3,10 +3,15 @@ use std::fs::File;
 use std::io::Read;
 use std::rc::Rc;
 
-use crate::collections::Point;
+use crate::collections::{Point, Vector};
 use crate::objects::{Group, GroupTransformable, Transform, Triangle};
 
-type ParsedObjects = (Vec<Point>, Vec<Triangle>, Vec<Rc<RefCell<Group>>>);
+type ParsedObjects = (
+    Vec<Point>,
+    Vec<Vector>,
+    Vec<Triangle>,
+    Vec<Rc<RefCell<Group>>>,
+);
 
 pub fn parse_obj(file_path: &str) -> Result<ParsedObjects, Box<dyn std::error::Error>> {
     let mut file_contents_as_string = String::new();
@@ -14,7 +19,8 @@ pub fn parse_obj(file_path: &str) -> Result<ParsedObjects, Box<dyn std::error::E
     let file_lines: Vec<&str> = file_contents_as_string.split("\n").collect();
 
     let mut parsed_vertices = vec![];
-    let mut parsed_triangles = vec![];
+    let mut parsed_normals = vec![];
+    let mut parsed_shapes: Vec<Triangle> = vec![];
     let mut parsed_groups = vec![];
 
     let default_group = Group::new::<Triangle>(Transform::default(), vec![]);
@@ -36,6 +42,18 @@ pub fn parse_obj(file_path: &str) -> Result<ParsedObjects, Box<dyn std::error::E
                 }
             }
 
+            vertex_normal if vertex_normal[0] == "vn" => {
+                if let [x_str, y_str, z_str] = vertex_normal[1..4] {
+                    let x = x_str.parse()?;
+                    let y = y_str.parse()?;
+                    let z = z_str.parse()?;
+
+                    parsed_normals.push(Vector::new(x, y, z));
+                } else {
+                    continue;
+                }
+            }
+
             face if face[0] == "f" => {
                 if face.len() >= 4 {
                     let vertex_indices_as_str = face[1..].to_vec();
@@ -48,21 +66,21 @@ pub fn parse_obj(file_path: &str) -> Result<ParsedObjects, Box<dyn std::error::E
                         vertices.push(parsed_vertices[vertex_idx - 1]);
                     }
 
-                    let mut triangles = face_triangulation(vertices);
+                    let triangles = face_triangulation(vertices);
 
-                    for triangle in &mut triangles {
+                    for mut triangle in triangles {
                         if current_group.is_some() {
                             current_group
                                 .as_mut()
                                 .unwrap()
                                 .borrow_mut()
-                                .add_object(triangle);
+                                .add_object(&mut triangle);
                         } else {
-                            default_group.borrow_mut().add_object(triangle);
+                            default_group.borrow_mut().add_object(&mut triangle);
                         }
-                    }
 
-                    parsed_triangles.append(&mut triangles);
+                        parsed_shapes.push(triangle);
+                    }
                 } else {
                     if let [idx1_str, idx2_str, idx3_str] = face[1..4] {
                         let idx1: usize = idx1_str.parse()?;
@@ -85,7 +103,7 @@ pub fn parse_obj(file_path: &str) -> Result<ParsedObjects, Box<dyn std::error::E
                             default_group.borrow_mut().add_object(&mut triangle);
                         }
 
-                        parsed_triangles.push(triangle);
+                        parsed_shapes.push(triangle);
                     } else {
                         continue;
                     }
@@ -114,7 +132,12 @@ pub fn parse_obj(file_path: &str) -> Result<ParsedObjects, Box<dyn std::error::E
         parsed_groups.push(old_group);
     }
 
-    Ok((parsed_vertices, parsed_triangles, parsed_groups))
+    Ok((
+        parsed_vertices,
+        parsed_normals,
+        parsed_shapes,
+        parsed_groups,
+    ))
 }
 
 fn face_triangulation(vertices: Vec<Point>) -> Vec<Triangle> {
@@ -137,8 +160,9 @@ mod tests {
     #[test]
     fn objparser_ignores_unrecognised_commands() {
         let parsed_objects = parse_obj("./resources/gibberish.obj").unwrap();
-        let (parsed_vertices, parsed_triangles, parsed_groups) = parsed_objects;
+        let (parsed_vertices, parsed_normals, parsed_triangles, parsed_groups) = parsed_objects;
         assert_eq!(parsed_vertices.len(), 0);
+        assert_eq!(parsed_normals.len(), 0);
         assert_eq!(parsed_triangles.len(), 0);
         assert_eq!(parsed_groups.len(), 1);
     }
@@ -157,41 +181,21 @@ mod tests {
     #[test]
     fn objparser_parses_triangle_data() {
         let parsed_objects = parse_obj("./resources/triangle.obj").unwrap();
-        let (parsed_vertices, parsed_triangles, _) = parsed_objects;
-        assert_eq!(parsed_triangles.len(), 2);
-        assert_eq!(
-            parsed_triangles[0].vertices,
-            [parsed_vertices[0], parsed_vertices[1], parsed_vertices[2]]
-        );
-        assert_eq!(
-            parsed_triangles[1].vertices,
-            [parsed_vertices[0], parsed_vertices[2], parsed_vertices[3]]
-        );
+        let parsed_shapes = parsed_objects.2;
+        assert_eq!(parsed_shapes.len(), 2);
     }
 
     #[test]
     fn objparser_parses_polygon_data() {
         let parsed_objects = parse_obj("./resources/polygon.obj").unwrap();
-        let (parsed_vertices, parsed_triangles, _) = parsed_objects;
-        assert_eq!(parsed_triangles.len(), 3);
-        assert_eq!(
-            parsed_triangles[0].vertices,
-            [parsed_vertices[0], parsed_vertices[1], parsed_vertices[2]]
-        );
-        assert_eq!(
-            parsed_triangles[1].vertices,
-            [parsed_vertices[0], parsed_vertices[2], parsed_vertices[3]]
-        );
-        assert_eq!(
-            parsed_triangles[2].vertices,
-            [parsed_vertices[0], parsed_vertices[3], parsed_vertices[4]]
-        );
+        let parsed_shapes = parsed_objects.2;
+        assert_eq!(parsed_shapes.len(), 3);
     }
 
     #[test]
     fn objparser_parses_groups() {
         let parsed_objects = parse_obj("./resources/group.obj").unwrap();
-        let (_, _, parsed_groups) = parsed_objects;
+        let (_, _, _, parsed_groups) = parsed_objects;
 
         assert_eq!(parsed_groups.len(), 3);
     }

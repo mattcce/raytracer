@@ -15,23 +15,35 @@ where
     pub t: f64,
     pub object: &'a S,
     pub ray: &'a Ray,
+    pub uv_coordinates: Option<(f64, f64)>,
 }
 
 impl<'a, S> RawIntersect<'a, S>
 where
     S: Shape + ?Sized,
 {
-    pub fn new(t: f64, object: &'a S, ray: &'a Ray) -> RawIntersect<'a, S> {
-        RawIntersect { t, object, ray }
+    pub fn new(
+        t: f64,
+        object: &'a S,
+        ray: &'a Ray,
+        uv_coordinates: Option<(f64, f64)>,
+    ) -> RawIntersect<'a, S> {
+        RawIntersect {
+            t,
+            object,
+            ray,
+            uv_coordinates,
+        }
     }
 
     pub fn precompute(&self) -> ComputedIntersect<'_, S> {
         let t = self.t;
         let object = self.object;
         let ray = self.ray;
+        let uv_coordinates = self.uv_coordinates;
         let target = self.ray.position(t);
         let eyev = -self.ray.direction;
-        let mut normal = object.normal_at(target);
+        let mut normal = object.normal_at(target, uv_coordinates);
         let inside = match normal.dot(eyev) {
             _x if _x < 0.0 => {
                 normal = -normal;
@@ -47,6 +59,7 @@ where
             t,
             object,
             ray,
+            uv_coordinates,
             target,
             eyev,
             normal,
@@ -66,6 +79,7 @@ where
     pub t: f64,
     pub object: &'a S,
     pub ray: &'a Ray,
+    pub uv_coordinates: Option<(f64, f64)>,
 
     pub target: Point,
     pub eyev: Vector,
@@ -223,11 +237,12 @@ mod tests {
     fn create_raw_intersect() {
         let sphere = Sphere::default();
         let ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 1.0, 0.0));
-        let raw_intersect = RawIntersect::new(1.0, &sphere, &ray);
+        let raw_intersect = RawIntersect::new(1.0, &sphere, &ray, None);
         let resulting_intersect = RawIntersect {
             t: 1.0,
             object: &sphere,
             ray: &ray,
+            uv_coordinates: None,
         };
         assert_eq!(raw_intersect.t, resulting_intersect.t);
         assert!(std::ptr::eq(
@@ -241,7 +256,7 @@ mod tests {
     fn compute_intersect_ray_outside() {
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let shape = Sphere::default();
-        let raw_intersect = RawIntersect::new(4.0, &shape, &ray);
+        let raw_intersect = RawIntersect::new(4.0, &shape, &ray, None);
         let computed_intersect = raw_intersect.precompute();
         assert_eq!(computed_intersect.target, Point::new(0.0, 0.0, -1.0));
         assert_eq!(computed_intersect.eyev, Vector::new(0.0, 0.0, -1.0));
@@ -256,7 +271,7 @@ mod tests {
     fn compute_intersect_ray_inside() {
         let ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let shape = Sphere::default();
-        let raw_intersect = RawIntersect::new(1.0, &shape, &ray);
+        let raw_intersect = RawIntersect::new(1.0, &shape, &ray, None);
         let computed_intersect = raw_intersect.precompute();
         assert_eq!(computed_intersect.target, Point::new(0.0, 0.0, 1.0));
         assert_eq!(computed_intersect.eyev, Vector::new(0.0, 0.0, -1.0));
@@ -268,9 +283,9 @@ mod tests {
     fn intersections_hit() {
         let sphere = Sphere::default();
         let ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 1.0, 0.0));
-        let intersect1 = RawIntersect::new(-1.0, &sphere, &ray);
-        let intersect2 = RawIntersect::new(2.0, &sphere, &ray);
-        let intersect3 = RawIntersect::new(3.0, &sphere, &ray);
+        let intersect1 = RawIntersect::new(-1.0, &sphere, &ray, None);
+        let intersect2 = RawIntersect::new(2.0, &sphere, &ray, None);
+        let intersect3 = RawIntersect::new(3.0, &sphere, &ray, None);
         let intersections = Intersections::new(vec![intersect1, intersect2, intersect3]);
         let resulting_hit = &intersections.0[1];
         assert!(std::ptr::eq(intersections.hit().unwrap(), resulting_hit));
@@ -283,7 +298,7 @@ mod tests {
             Transform::new(TransformKind::Translate(0.0, 0.0, 1.0)),
             Material::preset(),
         );
-        let raw_intersect = RawIntersect::new(5.0, &shape, &ray);
+        let raw_intersect = RawIntersect::new(5.0, &shape, &ray, None);
         let computed_intersect = raw_intersect.precompute();
         assert!(computed_intersect.over_point.z < -EPSILON / 2.0);
         assert!(computed_intersect.target.z > computed_intersect.over_point.z);
@@ -298,7 +313,7 @@ mod tests {
             Point::new(0.0, 1.0, -1.0),
             Vector::new(0.0, -(2.0_f64.sqrt()) / 2.0, 2.0_f64.sqrt() / 2.0),
         );
-        let raw_intersect = RawIntersect::new(2.0_f64.sqrt() / 2.0, &plane, &ray);
+        let raw_intersect = RawIntersect::new(2.0_f64.sqrt() / 2.0, &plane, &ray, None);
         let computed_intersect = raw_intersect.precompute();
         assert_eq!(
             computed_intersect.reflected_ray.direction,

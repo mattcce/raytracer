@@ -120,7 +120,7 @@ impl Shape for Cone {
         &mut self.material
     }
 
-    fn local_normal_at(&self, local_point: Point) -> Vector {
+    fn local_normal_at(&self, local_point: Point, _: Option<(f64, f64)>) -> Vector {
         let dist = local_point.x.powi(2) + local_point.z.powi(2);
 
         if dist < 1.0 {
@@ -140,13 +140,13 @@ impl Shape for Cone {
         Vector::new(local_point.x, y, local_point.z)
     }
 
-    fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
+    fn local_intersect(&self, local_ray: &Ray) -> Vec<(f64, Option<(f64, f64)>)> {
         let mut t_values = vec![];
 
         t_values.extend_from_slice(&self.intersect_walls(local_ray));
         t_values.extend_from_slice(&self.intersect_caps(local_ray));
 
-        t_values
+        t_values.iter().map(|&t| (t, None)).collect()
     }
 }
 
@@ -256,7 +256,7 @@ mod tests {
             (Point::new(-1.0, -1.0, 0.0), Vector::new(-1.0, 1.0, 0.0)),
         ];
         for (point, normal) in test_cases {
-            assert_eq!(cone.local_normal_at(point), normal);
+            assert_eq!(cone.local_normal_at(point, None), normal);
         }
     }
 }
