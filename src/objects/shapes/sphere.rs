@@ -1,11 +1,15 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::collections::{Point, Vector};
 use crate::objects::*;
 use crate::utils::Preset;
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug)]
 pub struct Sphere {
     pub transform: Transform,
     pub material: Material,
+    parent: Option<Rc<RefCell<Group>>>,
 }
 
 impl Sphere {
@@ -13,6 +17,7 @@ impl Sphere {
         Sphere {
             transform,
             material,
+            parent: None,
         }
     }
 }
@@ -24,14 +29,6 @@ impl Shape for Sphere {
 
     fn material_mut(&mut self) -> &mut Material {
         &mut self.material
-    }
-
-    fn transformation_matrix(&self) -> &Transform {
-        &self.transform
-    }
-
-    fn transformation_matrix_mut(&mut self) -> &mut Transform {
-        &mut self.transform
     }
 
     fn local_normal_at(&self, local_point: Point) -> Vector {
@@ -56,11 +53,30 @@ impl Shape for Sphere {
     }
 }
 
+impl GroupTransformable for Sphere {
+    fn transformation_matrix(&self) -> &Transform {
+        &self.transform
+    }
+
+    fn transformation_matrix_mut(&mut self) -> &mut Transform {
+        &mut self.transform
+    }
+
+    fn parent(&self) -> Option<Rc<RefCell<Group>>> {
+        Option::clone(&self.parent)
+    }
+
+    fn set_parent(&mut self, group: Rc<RefCell<Group>>) {
+        self.parent = Some(group);
+    }
+}
+
 impl Preset for Sphere {
     fn preset() -> Sphere {
         Sphere {
             transform: Transform::preset(),
             material: Material::preset(),
+            parent: None,
         }
     }
 }

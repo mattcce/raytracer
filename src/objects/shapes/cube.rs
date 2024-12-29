@@ -1,13 +1,16 @@
+use std::cell::RefCell;
 use std::default::Default;
+use std::rc::Rc;
 
 use crate::collections::{Point, Vector};
-use crate::objects::{Material, Ray, Shape, Transform};
+use crate::objects::{Group, GroupTransformable, Material, Ray, Shape, Transform};
 use crate::utils::floats::EPSILON;
 
 #[derive(Default, Debug)]
 pub struct Cube {
     pub transform: Transform,
     pub material: Material,
+    parent: Option<Rc<RefCell<Group>>>,
 }
 
 impl Cube {
@@ -15,6 +18,7 @@ impl Cube {
         Cube {
             transform,
             material,
+            parent: None,
         }
     }
 
@@ -49,14 +53,6 @@ impl Shape for Cube {
         &mut self.material
     }
 
-    fn transformation_matrix(&self) -> &Transform {
-        &self.transform
-    }
-
-    fn transformation_matrix_mut(&mut self) -> &mut Transform {
-        &mut self.transform
-    }
-
     fn local_normal_at(&self, local_point: Point) -> Vector {
         let maxc = [
             local_point.x.abs(),
@@ -88,6 +84,24 @@ impl Shape for Cube {
         } else {
             vec![tmin, tmax]
         }
+    }
+}
+
+impl GroupTransformable for Cube {
+    fn transformation_matrix(&self) -> &Transform {
+        &self.transform
+    }
+
+    fn transformation_matrix_mut(&mut self) -> &mut Transform {
+        &mut self.transform
+    }
+
+    fn parent(&self) -> Option<Rc<RefCell<Group>>> {
+        Option::clone(&self.parent)
+    }
+
+    fn set_parent(&mut self, group: Rc<RefCell<Group>>) {
+        self.parent = Some(group);
     }
 }
 

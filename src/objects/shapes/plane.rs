@@ -1,13 +1,16 @@
+use std::cell::RefCell;
 use std::default::Default;
+use std::rc::Rc;
 
 use crate::collections::{Point, Vector};
-use crate::objects::{Material, Ray, Shape, Transform};
+use crate::objects::{Group, GroupTransformable, Material, Ray, Shape, Transform};
 use crate::utils::{Preset, EPSILON};
 
 #[derive(Default, Debug)]
 pub struct Plane {
     pub transform: Transform,
     pub material: Material,
+    parent: Option<Rc<RefCell<Group>>>,
 }
 
 impl Plane {
@@ -15,6 +18,7 @@ impl Plane {
         Plane {
             transform,
             material,
+            parent: None,
         }
     }
 }
@@ -28,14 +32,6 @@ impl Shape for Plane {
         &mut self.material
     }
 
-    fn transformation_matrix(&self) -> &Transform {
-        &self.transform
-    }
-
-    fn transformation_matrix_mut(&mut self) -> &mut Transform {
-        &mut self.transform
-    }
-
     fn local_normal_at(&self, _local_point: Point) -> Vector {
         Vector::new(0.0, 1.0, 0.0)
     }
@@ -47,6 +43,24 @@ impl Shape for Plane {
 
         let t = -local_ray.origin.y / local_ray.direction.y;
         vec![t]
+    }
+}
+
+impl GroupTransformable for Plane {
+    fn transformation_matrix(&self) -> &Transform {
+        &self.transform
+    }
+
+    fn transformation_matrix_mut(&mut self) -> &mut Transform {
+        &mut self.transform
+    }
+
+    fn parent(&self) -> Option<Rc<RefCell<Group>>> {
+        Option::clone(&self.parent)
+    }
+
+    fn set_parent(&mut self, group: Rc<RefCell<Group>>) {
+        self.parent = Some(group);
     }
 }
 

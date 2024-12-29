@@ -1,5 +1,8 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::collections::{Point, Vector};
-use crate::objects::{Material, Ray, Shape, Transform};
+use crate::objects::{Group, GroupTransformable, Material, Ray, Shape, Transform};
 use crate::utils::EPSILON;
 
 #[derive(Debug)]
@@ -10,6 +13,7 @@ pub struct Cylinder {
     closed_bot: bool,
     y_maximum: f64,
     closed_top: bool,
+    parent: Option<Rc<RefCell<Group>>>,
 }
 
 impl Cylinder {
@@ -24,6 +28,7 @@ impl Cylinder {
             closed_bot,
             y_maximum,
             closed_top,
+            parent: None,
         }
     }
 
@@ -112,14 +117,6 @@ impl Shape for Cylinder {
         &mut self.material
     }
 
-    fn transformation_matrix(&self) -> &Transform {
-        &self.transform
-    }
-
-    fn transformation_matrix_mut(&mut self) -> &mut Transform {
-        &mut self.transform
-    }
-
     fn local_normal_at(&self, local_point: Point) -> Vector {
         let dist = local_point.x.powi(2) + local_point.z.powi(2);
 
@@ -144,6 +141,24 @@ impl Shape for Cylinder {
     }
 }
 
+impl GroupTransformable for Cylinder {
+    fn transformation_matrix(&self) -> &Transform {
+        &self.transform
+    }
+
+    fn transformation_matrix_mut(&mut self) -> &mut Transform {
+        &mut self.transform
+    }
+
+    fn parent(&self) -> Option<Rc<RefCell<Group>>> {
+        Option::clone(&self.parent)
+    }
+
+    fn set_parent(&mut self, group: Rc<RefCell<Group>>) {
+        self.parent = Some(group);
+    }
+}
+
 impl Default for Cylinder {
     fn default() -> Self {
         Cylinder {
@@ -153,6 +168,7 @@ impl Default for Cylinder {
             closed_top: false,
             y_minimum: f64::NEG_INFINITY,
             closed_bot: true,
+            parent: None,
         }
     }
 }

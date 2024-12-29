@@ -9,14 +9,14 @@ pub trait Preset: Default {
 
 impl Sphere {
     pub fn glass_sphere() -> Sphere {
-        Sphere {
-            material: Material {
+        Sphere::new(
+            Transform::preset(),
+            Material {
                 transparency: 1.0,
                 refractive_index: 1.5,
                 ..Material::preset()
             },
-            ..Sphere::preset()
-        }
+        )
     }
 }
 

@@ -46,7 +46,7 @@ impl World {
         }
     }
 
-    fn intersect_ray<'a>(&'a self, ray: &'a Ray) -> Intersections<'a, dyn Shape> {
+    pub fn intersect_ray<'a>(&'a self, ray: &'a Ray) -> Intersections<'a, dyn Shape> {
         self.objects
             .iter()
             .map(|object| object.intersect(ray))
@@ -152,19 +152,19 @@ impl World {
 
 impl Preset for World {
     fn preset() -> World {
-        let s1 = Sphere {
-            material: Material {
+        let s1 = Sphere::new(
+            Transform::preset(),
+            Material {
                 pattern: Box::new(Solid::new(Colour::new(0.8, 1.0, 0.6))),
                 diffuse: 0.7,
                 specular: 0.2,
                 ..Material::preset()
             },
-            ..Sphere::preset()
-        };
-        let s2 = Sphere {
-            transform: Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)),
-            ..Sphere::preset()
-        };
+        );
+        let s2 = Sphere::new(
+            Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)),
+            Material::preset(),
+        );
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         World {
             objects: vec![Box::new(s1), Box::new(s2)],
@@ -223,23 +223,23 @@ mod tests {
 
     #[test]
     fn cast_ray_intersects_behind() {
-        let s1 = Sphere {
-            material: Material {
+        let s1 = Sphere::new(
+            Transform::preset(),
+            Material {
                 pattern: Box::new(Solid::new(Colour::new(0.8, 1.0, 0.6))),
                 ambient: 1.0,
                 diffuse: 0.7,
                 specular: 0.2,
                 ..Material::preset()
             },
-            ..Sphere::preset()
-        };
-        let s2 = Sphere {
-            material: Material {
+        );
+        let s2 = Sphere::new(
+            Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)),
+            Material {
                 ambient: 1.0,
                 ..Material::preset()
             },
-            transform: Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)),
-        };
+        );
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World::new(vec![Box::new(s1), Box::new(s2)], vec![Box::new(light)]);
         let inner = &world.objects[1];
@@ -282,14 +282,14 @@ mod tests {
     #[test]
     fn cast_ray_hit_in_shadow() {
         let s1 = Sphere::preset();
-        let s2 = Sphere {
-            transform: Transform::new(TransformKind::Translate(0.0, 0.0, 10.0)),
-            ..Sphere::preset()
-        };
-        let s2_clone = Sphere {
-            transform: Transform::new(TransformKind::Translate(0.0, 0.0, 10.0)),
-            ..Sphere::preset()
-        };
+        let s2 = Sphere::new(
+            Transform::new(TransformKind::Translate(0.0, 0.0, 10.0)),
+            Material::preset(),
+        );
+        let s2_clone = Sphere::new(
+            Transform::new(TransformKind::Translate(0.0, 0.0, 10.0)),
+            Material::preset(),
+        );
         let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World::new(
             vec![Box::new(s1), Box::new(s2_clone)],
@@ -367,20 +367,20 @@ mod tests {
     fn shade_hit_mutually_reflective_surfaces() {
         let world = World {
             objects: vec![
-                Box::new(Plane {
-                    material: Material {
+                Box::new(Plane::new(
+                    Transform::new(TransformKind::Translate(0.0, -1.0, 0.0)),
+                    Material {
                         reflectance: 1.0,
                         ..Material::preset()
                     },
-                    transform: Transform::new(TransformKind::Translate(0.0, -1.0, 0.0)),
-                }),
-                Box::new(Plane {
-                    material: Material {
+                )),
+                Box::new(Plane::new(
+                    Transform::new(TransformKind::Translate(0.0, 1.0, 0.0)),
+                    Material {
                         reflectance: 1.0,
                         ..Material::preset()
                     },
-                    transform: Transform::new(TransformKind::Translate(0.0, 1.0, 0.0)),
-                }),
+                )),
             ],
             lights: vec![Box::new(Light::new(
                 Point::new(0.0, 0.0, 0.0),
@@ -394,27 +394,27 @@ mod tests {
 
     #[test]
     fn refractive_indices_at_various_intersections() {
-        let sphere1 = Sphere {
-            material: Material {
+        let sphere1 = Sphere::new(
+            Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)),
+            Material {
                 refractive_index: 1.5,
                 ..Sphere::glass_sphere().material
             },
-            transform: Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)),
-        };
-        let sphere2 = Sphere {
-            material: Material {
+        );
+        let sphere2 = Sphere::new(
+            Transform::new(TransformKind::Translate(0.0, 0.0, -0.25)),
+            Material {
                 refractive_index: 2.0,
                 ..Sphere::glass_sphere().material
             },
-            transform: Transform::new(TransformKind::Translate(0.0, 0.0, -0.25)),
-        };
-        let sphere3 = Sphere {
-            material: Material {
+        );
+        let sphere3 = Sphere::new(
+            Transform::new(TransformKind::Translate(0.0, 0.0, 0.25)),
+            Material {
                 refractive_index: 2.5,
                 ..Sphere::glass_sphere().material
             },
-            transform: Transform::new(TransformKind::Translate(0.0, 0.0, 0.25)),
-        };
+        );
         let world = World::new(
             vec![Box::new(sphere1), Box::new(sphere2), Box::new(sphere3)],
             vec![],

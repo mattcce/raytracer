@@ -213,7 +213,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::objects::{Plane, Sphere, Transform, TransformKind};
+    use crate::objects::{Material, Plane, Sphere, Transform, TransformKind};
     use crate::scenes::World;
     use crate::utils::Preset;
 
@@ -279,10 +279,10 @@ mod tests {
     #[test]
     fn hit_offset_point() {
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let shape = Sphere {
-            transform: Transform::new(TransformKind::Translate(0.0, 0.0, 1.0)),
-            ..Sphere::preset()
-        };
+        let shape = Sphere::new(
+            Transform::new(TransformKind::Translate(0.0, 0.0, 1.0)),
+            Material::preset(),
+        );
         let raw_intersect = RawIntersect::new(5.0, &shape, &ray);
         let computed_intersect = raw_intersect.precompute();
         assert!(computed_intersect.over_point.z < -EPSILON / 2.0);
