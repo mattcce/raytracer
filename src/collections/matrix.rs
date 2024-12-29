@@ -87,6 +87,18 @@ impl Mul<&Matrix> for Matrix {
     }
 }
 
+pub trait Tuple4 {
+    fn to_tuple4(self) -> [f64; 4];
+}
+
+impl<T: Tuple4> From<T> for Matrix {
+    type Output = Matrix;
+
+    fn from(self: T) -> Self::Output {
+        Matrix::try_from(self.to_tuple4().to_vec())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
