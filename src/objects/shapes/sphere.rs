@@ -2,7 +2,7 @@ use crate::collections::{Point, Vector};
 use crate::objects::*;
 use crate::utils::Preset;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, PartialEq)]
 pub struct Sphere {
     pub transform: Transform,
     pub material: Material,

@@ -1,3 +1,4 @@
+pub mod boundary;
 pub mod intersections;
 pub mod light;
 pub mod material;
@@ -7,6 +8,7 @@ pub mod shapes;
 pub mod transform;
 
 // crate-level re-exports
+pub(crate) use boundary::*;
 pub(crate) use intersections::*;
 pub(crate) use light::*;
 pub(crate) use material::*;

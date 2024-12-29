@@ -50,7 +50,11 @@ impl Shape for Plane {
     }
 }
 
-impl Preset for Plane {}
+impl Preset for Plane {
+    fn preset() -> Plane {
+        Plane::new(Transform::preset(), Material::preset())
+    }
+}
 
 #[cfg(test)]
 mod tests {

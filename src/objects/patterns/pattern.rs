@@ -12,3 +12,9 @@ pub trait Pattern: Debug {
     fn transformation_matrix(&self) -> &Transform;
     fn local_colour_at(&self, pattern_point: Point) -> Colour;
 }
+
+impl PartialEq for dyn Pattern {
+    fn eq(&self, other: &Self) -> bool {
+        format!("{:?}", self) == format!("{:?}", other)
+    }
+}

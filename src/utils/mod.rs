@@ -1,13 +1,13 @@
 pub(crate) mod filehandler;
 pub(crate) mod floats;
-pub mod preset;
+pub mod presets;
 
 // crate-level re-exports
 pub(crate) use filehandler::*;
 pub(crate) use floats::*;
-pub(crate) use preset::*;
+pub(crate) use presets::*;
 
 // public re-exports (through crate::prelude)
 pub(super) mod prelude {
-    pub use super::preset::Preset;
+    pub use super::presets::Preset;
 }
