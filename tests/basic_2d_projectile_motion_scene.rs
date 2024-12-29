@@ -43,12 +43,15 @@ fn basic_2d_projectile_motion_scene() {
             y if y >= 0.0 => 550 - y as usize,
             _ => break,
         };
-        if canvas.paint_colour(pos_x, pos_y, Colour::new(1.0, 0.0, 0.0)).is_err() {
+        if canvas
+            .paint_colour(pos_x, pos_y, Colour::new(1.0, 0.0, 0.0))
+            .is_err()
+        {
             break;
         } else {
             scene1.tick();
         }
     }
 
-    canvas.output_to_ppm("test_output.ppm").unwrap();
+    canvas.output_to_ppm("test_output_projmotion.ppm").unwrap();
 }
