@@ -10,4 +10,6 @@ pub(crate) use floats::*;
 pub(crate) use objparser::*;
 
 // public re-exports (through crate::prelude)
-pub(super) mod prelude {}
+pub(super) mod prelude {
+    pub use super::builder::{BuildInto, Buildable, ConsumingBuilder};
+}

@@ -1,17 +1,11 @@
 use crate::collections::{Point, Vector};
 use crate::objects::*;
-use crate::utils::EPSILON;
+use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Default, Debug, PartialEq)]
 pub struct Sphere {
     frame_transformation: Transform,
     material: Material,
-}
-
-impl Sphere {
-    pub fn builder() -> ShapeBuilder<Sphere> {
-        ShapeBuilder::default()
-    }
 }
 
 impl PrimitiveShape for Sphere {
@@ -48,8 +42,36 @@ impl PrimitiveShape for Sphere {
     }
 }
 
-impl ShapeBuilder<Sphere> {
-    pub fn build(self) -> Sphere {
+#[derive(Debug, Default)]
+pub struct SphereBuilder {
+    frame_transformation: Option<Transform>,
+    material: Option<Material>,
+}
+
+impl SphereBuilder {
+    pub fn set_frame_transformation(mut self, frame_transformation: Transform) -> SphereBuilder {
+        self.frame_transformation = Some(frame_transformation);
+        self
+    }
+
+    pub fn set_material(mut self, material: Material) -> SphereBuilder {
+        self.material = Some(material);
+        self
+    }
+}
+
+impl Buildable for Sphere {
+    type Builder = SphereBuilder;
+
+    fn builder() -> Self::Builder {
+        SphereBuilder::default()
+    }
+}
+
+impl ConsumingBuilder for SphereBuilder {
+    type Built = Sphere;
+
+    fn build(self) -> Self::Built {
         let frame_transformation = self.frame_transformation.unwrap_or_default();
         let material = self.material.unwrap_or_default();
 
@@ -59,10 +81,11 @@ impl ShapeBuilder<Sphere> {
         };
         sphere
     }
+}
 
-    pub fn wrap(self) -> Shape {
-        let sphere = self.build();
-        Shape::wrap_primitive(sphere)
+impl Into<Shape> for Sphere {
+    fn into(self) -> Shape {
+        Shape::Primitive(Box::new(self))
     }
 }
 

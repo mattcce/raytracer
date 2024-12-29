@@ -378,6 +378,7 @@ mod tests {
     use super::*;
     use crate::objects::{Material, Plane, Sphere, Transform, TransformKind};
     use crate::scenes::World;
+    use crate::utils::{BuildInto, Buildable, ConsumingBuilder};
 
     #[test]
     fn compute_intersect_ray_outside() {
@@ -458,7 +459,7 @@ mod tests {
                 refractive_index: 1.5,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
 
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Translate(0.0, 0.0, -0.25)))
@@ -467,7 +468,7 @@ mod tests {
                 refractive_index: 2.0,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s3 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Translate(0.0, 0.0, 0.25)))
             .set_material(Material {
@@ -475,7 +476,7 @@ mod tests {
                 refractive_index: 2.5,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let world = World::new(vec![s1, s2, s3], vec![]);
         let ray = Ray::new(Point::new(0.0, 0.0, -4.0), Vector::new(0.0, 0.0, 1.0));
         let mut hit_register = world.intersect_ray(&ray);

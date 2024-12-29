@@ -1,6 +1,6 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, ShapeBuilder, Transform};
-use crate::utils::EPSILON;
+use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, Transform};
+use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Debug)]
 pub struct SmoothTriangle {
@@ -12,10 +12,6 @@ pub struct SmoothTriangle {
 }
 
 impl SmoothTriangle {
-    pub fn builder() -> ShapeBuilder<SmoothTriangle> {
-        ShapeBuilder::default()
-    }
-
     pub fn vertices(&self) -> [Point; 3] {
         self.vertices
     }
@@ -72,18 +68,51 @@ impl PrimitiveShape for SmoothTriangle {
     }
 }
 
-impl ShapeBuilder<SmoothTriangle> {
-    pub fn set_vertices(mut self, vertices: [Point; 3]) -> ShapeBuilder<SmoothTriangle> {
+#[derive(Debug, Default)]
+pub struct SmoothTriangleBuilder {
+    frame_transformation: Option<Transform>,
+    material: Option<Material>,
+    vertices: Option<[Point; 3]>,
+    normals: Option<[Vector; 3]>,
+}
+
+impl SmoothTriangleBuilder {
+    pub fn set_frame_transformation(
+        mut self,
+        frame_transformation: Transform,
+    ) -> SmoothTriangleBuilder {
+        self.frame_transformation = Some(frame_transformation);
+        self
+    }
+
+    pub fn set_material(mut self, material: Material) -> SmoothTriangleBuilder {
+        self.material = Some(material);
+        self
+    }
+
+    pub fn set_vertices(mut self, vertices: [Point; 3]) -> SmoothTriangleBuilder {
         self.vertices = Some(vertices);
         self
     }
 
-    pub fn set_normals(mut self, normals: [Vector; 3]) -> ShapeBuilder<SmoothTriangle> {
+    pub fn set_normals(mut self, normals: [Vector; 3]) -> SmoothTriangleBuilder {
         self.normals = Some(normals);
         self
     }
+}
 
-    pub fn build(self) -> SmoothTriangle {
+impl Buildable for SmoothTriangle {
+    type Builder = SmoothTriangleBuilder;
+
+    fn builder() -> Self::Builder {
+        SmoothTriangleBuilder::default()
+    }
+}
+
+impl ConsumingBuilder for SmoothTriangleBuilder {
+    type Built = SmoothTriangle;
+
+    fn build(self) -> Self::Built {
         let frame_transformation = self.frame_transformation.unwrap_or_default();
         let material = self.material.unwrap_or_default();
         let [v1, v2, v3] = self.vertices.unwrap();
@@ -99,12 +128,14 @@ impl ShapeBuilder<SmoothTriangle> {
         };
         smooth_triangle
     }
+}
 
-    pub fn wrap(self) -> Shape {
-        let smooth_triangle = self.build();
-        Shape::wrap_primitive(smooth_triangle)
+impl Into<Shape> for SmoothTriangle {
+    fn into(self) -> Shape {
+        Shape::Primitive(Box::new(self))
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;

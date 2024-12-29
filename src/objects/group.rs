@@ -1,4 +1,5 @@
 use crate::objects::*;
+use crate::utils::{Buildable, ConsumingBuilder};
 
 #[derive(Default, Debug)]
 pub struct Group {
@@ -7,10 +8,6 @@ pub struct Group {
 }
 
 impl Group {
-    pub fn builder() -> ShapeBuilder<Group> {
-        ShapeBuilder::default()
-    }
-
     pub fn frame_transformation(&self) -> &Transform {
         &self.frame_transformation
     }
@@ -48,13 +45,30 @@ impl Intersectable<dyn PrimitiveShape> for Group {
     }
 }
 
-impl ShapeBuilder<Group> {
-    pub fn set_objects(mut self, objects: Vec<Shape>) -> ShapeBuilder<Group> {
+#[derive(Debug, Default)]
+pub struct GroupBuilder {
+    frame_transformation: Option<Transform>,
+    material: Option<Material>,
+    objects: Option<Vec<Shape>>,
+}
+
+impl GroupBuilder {
+    pub fn set_frame_transformation(mut self, frame_transformation: Transform) -> GroupBuilder {
+        self.frame_transformation = Some(frame_transformation);
+        self
+    }
+
+    pub fn set_material(mut self, material: Material) -> GroupBuilder {
+        self.material = Some(material);
+        self
+    }
+
+    pub fn set_objects(mut self, objects: Vec<Shape>) -> GroupBuilder {
         self.objects = Some(objects);
         self
     }
 
-    pub fn add_object(mut self, object: Shape) -> ShapeBuilder<Group> {
+    pub fn add_object(mut self, object: Shape) -> GroupBuilder {
         match self.objects {
             Some(ref mut objects) => {
                 objects.push(object);
@@ -63,8 +77,20 @@ impl ShapeBuilder<Group> {
         }
         self
     }
+}
 
-    pub fn build(self) -> Group {
+impl Buildable for Group {
+    type Builder = GroupBuilder;
+
+    fn builder() -> Self::Builder {
+        GroupBuilder::default()
+    }
+}
+
+impl ConsumingBuilder for GroupBuilder {
+    type Built = Group;
+
+    fn build(self) -> Self::Built {
         let frame_transformation = self.frame_transformation.unwrap_or_default();
         let objects = self.objects.unwrap_or_default();
         let group = Group {
@@ -73,10 +99,11 @@ impl ShapeBuilder<Group> {
         };
         group
     }
+}
 
-    pub fn wrap(self) -> Shape {
-        let group = self.build();
-        Shape::wrap_group(group)
+impl Into<Shape> for Group {
+    fn into(self) -> Shape {
+        Shape::Group(self)
     }
 }
 
@@ -85,18 +112,19 @@ mod tests {
     use super::*;
     use crate::collections::{Angle, Point, Vector};
     use crate::objects::{Axis, Ray, Sphere, TransformKind};
+    use crate::utils::BuildInto;
 
     #[test]
     fn intersect_ray_with_nonempty_group() {
-        let s1 = Sphere::builder().wrap();
+        let s1 = Sphere::builder().build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Translate(0.0, 0.0, -3.0)))
-            .wrap();
+            .build_into();
         let s3 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)))
-            .wrap();
+            .build_into();
         let objects = vec![s1, s2, s3];
-        let group = Group::builder().set_objects(objects).wrap();
+        let group: Shape = Group::builder().set_objects(objects).build_into();
         let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
 
         let shape = group
@@ -114,12 +142,12 @@ mod tests {
     fn intersect_transformed_group() {
         let s1 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)))
-            .wrap();
+            .build_into();
         let objects = vec![s1];
-        let group = Group::builder()
+        let group: Shape = Group::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)))
             .set_objects(objects)
-            .wrap();
+            .build_into();
         let ray = Ray::new(Point::new(10.0, 0.0, -10.0), Vector::new(0.0, 0.0, 1.0));
 
         let shape = group
@@ -137,13 +165,13 @@ mod tests {
     fn transform_stack_propagates_through_groups() {
         let s1 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)))
-            .wrap();
+            .build_into();
         let objects = vec![s1];
 
         let g2 = Group::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)))
             .set_objects(objects)
-            .wrap();
+            .build_into();
         let g1 = Group::builder()
             .set_frame_transformation(Transform::new(TransformKind::Rotate(
                 Axis::Y,

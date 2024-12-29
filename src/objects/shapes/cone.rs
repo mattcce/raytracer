@@ -1,6 +1,6 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, ShapeBuilder, Transform};
-use crate::utils::EPSILON;
+use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, Transform};
+use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Debug)]
 pub struct Cone {
@@ -13,10 +13,6 @@ pub struct Cone {
 }
 
 impl Cone {
-    pub fn builder() -> ShapeBuilder<Cone> {
-        ShapeBuilder::default()
-    }
-
     pub fn y_minimum(&mut self) -> Option<f64> {
         if self.closed_bot {
             None
@@ -154,18 +150,48 @@ impl PrimitiveShape for Cone {
     }
 }
 
-impl ShapeBuilder<Cone> {
-    pub fn set_y_minimum(mut self, y_minimum: f64) -> ShapeBuilder<Cone> {
+#[derive(Debug, Default)]
+pub struct ConeBuilder {
+    frame_transformation: Option<Transform>,
+    material: Option<Material>,
+    y_minimum: Option<f64>,
+    y_maximum: Option<f64>,
+}
+
+impl ConeBuilder {
+    pub fn set_frame_transformation(mut self, frame_transformation: Transform) -> ConeBuilder {
+        self.frame_transformation = Some(frame_transformation);
+        self
+    }
+
+    pub fn set_material(mut self, material: Material) -> ConeBuilder {
+        self.material = Some(material);
+        self
+    }
+
+    pub fn set_y_minimum(mut self, y_minimum: f64) -> ConeBuilder {
         self.y_minimum = Some(y_minimum);
         self
     }
 
-    pub fn set_y_maximum(mut self, y_maximum: f64) -> ShapeBuilder<Cone> {
+    pub fn set_y_maximum(mut self, y_maximum: f64) -> ConeBuilder {
         self.y_maximum = Some(y_maximum);
         self
     }
+}
 
-    pub fn build(self) -> Cone {
+impl Buildable for Cone {
+    type Builder = ConeBuilder;
+
+    fn builder() -> Self::Builder {
+        ConeBuilder::default()
+    }
+}
+
+impl ConsumingBuilder for ConeBuilder {
+    type Built = Cone;
+
+    fn build(self) -> Self::Built {
         let frame_transformation = self.frame_transformation.unwrap_or_default();
         let material = self.material.unwrap_or_default();
         let (y_minimum, closed_bot) = match self.y_minimum {
@@ -187,10 +213,11 @@ impl ShapeBuilder<Cone> {
         };
         cone
     }
+}
 
-    pub fn wrap(self) -> Shape {
-        let cone = self.build();
-        Shape::wrap_primitive(cone)
+impl Into<Shape> for Cone {
+    fn into(self) -> Shape {
+        Shape::Primitive(Box::new(self))
     }
 }
 

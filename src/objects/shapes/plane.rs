@@ -1,17 +1,11 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, ShapeBuilder, Transform};
-use crate::utils::EPSILON;
+use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, Transform};
+use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Default, Debug)]
 pub struct Plane {
     frame_transformation: Transform,
     material: Material,
-}
-
-impl Plane {
-    pub fn builder() -> ShapeBuilder<Plane> {
-        ShapeBuilder::default()
-    }
 }
 
 impl PrimitiveShape for Plane {
@@ -37,8 +31,36 @@ impl PrimitiveShape for Plane {
     }
 }
 
-impl ShapeBuilder<Plane> {
-    pub fn build(self) -> Plane {
+#[derive(Debug, Default)]
+pub struct PlaneBuilder {
+    frame_transformation: Option<Transform>,
+    material: Option<Material>,
+}
+
+impl PlaneBuilder {
+    pub fn set_frame_transformation(mut self, frame_transformation: Transform) -> PlaneBuilder {
+        self.frame_transformation = Some(frame_transformation);
+        self
+    }
+
+    pub fn set_material(mut self, material: Material) -> PlaneBuilder {
+        self.material = Some(material);
+        self
+    }
+}
+
+impl Buildable for Plane {
+    type Builder = PlaneBuilder;
+
+    fn builder() -> Self::Builder {
+        PlaneBuilder::default()
+    }
+}
+
+impl ConsumingBuilder for PlaneBuilder {
+    type Built = Plane;
+
+    fn build(self) -> Self::Built {
         let frame_transformation = self.frame_transformation.unwrap_or_default();
         let material = self.material.unwrap_or_default();
 
@@ -48,16 +70,18 @@ impl ShapeBuilder<Plane> {
         };
         plane
     }
+}
 
-    pub fn wrap(self) -> Shape {
-        let plane = self.build();
-        Shape::wrap_primitive(plane)
+impl Into<Shape> for Plane {
+    fn into(self) -> Shape {
+        Shape::Primitive(Box::new(self))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::collections::{Point, Vector};
+    use crate::utils::BuildInto;
 
     use super::*;
 
@@ -75,7 +99,7 @@ mod tests {
 
     #[test]
     fn intersect_ray_parallel_to_plane() {
-        let default_plane = Plane::builder().wrap();
+        let default_plane: Shape = Plane::builder().build_into();
         let ray = Ray::new(Point::new(0.0, 10.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let hit_register = default_plane.intersect_ray(&ray, vec![]);
         assert!(hit_register.finalise_hit().is_none());
@@ -83,7 +107,7 @@ mod tests {
 
     #[test]
     fn intersect_ray_coplanar_to_plane() {
-        let default_plane = Plane::builder().wrap();
+        let default_plane: Shape = Plane::builder().build_into();
         let ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let hit_register = default_plane.intersect_ray(&ray, vec![]);
         assert!(hit_register.finalise_hit().is_none());
@@ -91,7 +115,7 @@ mod tests {
 
     #[test]
     fn intersect_plane_from_above() {
-        let default_plane = Plane::builder().wrap();
+        let default_plane: Shape = Plane::builder().build_into();
         let ray = Ray::new(Point::new(0.0, 1.0, 0.0), Vector::new(0.0, -1.0, 0.0));
         let hit_register = default_plane.intersect_ray(&ray, vec![]);
         assert_eq!(hit_register.finalise_hit().unwrap().t(), 1.0);
@@ -99,7 +123,7 @@ mod tests {
 
     #[test]
     fn intersect_plane_from_below() {
-        let default_plane = Plane::builder().wrap();
+        let default_plane: Shape = Plane::builder().build_into();
         let ray = Ray::new(Point::new(0.0, -1.0, 0.0), Vector::new(0.0, 1.0, 0.0));
         let hit_register = default_plane.intersect_ray(&ray, vec![]);
         assert_eq!(hit_register.finalise_hit().unwrap().t(), 1.0);

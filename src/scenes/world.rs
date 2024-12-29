@@ -1,5 +1,6 @@
 use crate::collections::*;
 use crate::objects::*;
+use crate::utils::*;
 
 #[derive(Default, Debug)]
 pub struct World {
@@ -157,11 +158,11 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -184,11 +185,11 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(0.0, 0.25, 0.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -211,11 +212,11 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -235,11 +236,11 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -263,14 +264,14 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material {
                 ambient: 1.0,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World::new(vec![s1, s2], vec![light]);
         let inner = &world.objects[1];
@@ -295,11 +296,11 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -317,11 +318,11 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -340,11 +341,11 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -363,11 +364,11 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -386,11 +387,11 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -402,11 +403,13 @@ mod tests {
 
     #[test]
     fn cast_ray_hit_in_shadow() {
-        let s1 = Sphere::builder().set_material(Material::preset()).wrap();
+        let s1 = Sphere::builder()
+            .set_material(Material::preset())
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Translate(0.0, 0.0, 10.0)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World::new(vec![s1, s2], vec![light]);
         let ray = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
@@ -430,14 +433,14 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material {
                 ambient: 1.0,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -461,18 +464,18 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let s3 = Plane::builder()
             .set_frame_transformation(Transform::new(TransformKind::Translate(0.0, -1.0, 0.0)))
             .set_material(Material {
                 reflectance: 0.5,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2, s3],
@@ -499,18 +502,18 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let s3 = Plane::builder()
             .set_frame_transformation(Transform::new(TransformKind::Translate(0.0, -1.0, 0.0)))
             .set_material(Material {
                 reflectance: 0.5,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2, s3],
@@ -535,14 +538,14 @@ mod tests {
                 reflectance: 1.0,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Plane::builder()
             .set_frame_transformation(Transform::new(TransformKind::Translate(0.0, 1.0, 0.0)))
             .set_material(Material {
                 reflectance: 1.0,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(0.0, 0.0, 0.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -562,11 +565,11 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -592,11 +595,11 @@ mod tests {
                 refractive_index: 1.5,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -648,7 +651,7 @@ mod tests {
                 ambient: 1.0,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material {
@@ -656,7 +659,7 @@ mod tests {
                 refractive_index: 1.5,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2],
@@ -680,11 +683,11 @@ mod tests {
                 specular: 0.2,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s2 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Scale(0.5, 0.5, 0.5)))
             .set_material(Material::preset())
-            .wrap();
+            .build_into();
         let s3 = Plane::builder()
             .set_frame_transformation(Transform::new(TransformKind::Translate(0.0, -1.0, 0.0)))
             .set_material(Material {
@@ -693,7 +696,7 @@ mod tests {
                 refractive_index: 1.5,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let s4 = Sphere::builder()
             .set_frame_transformation(Transform::new(TransformKind::Translate(0.0, -3.5, -0.5)))
             .set_material(Material {
@@ -701,7 +704,7 @@ mod tests {
                 ambient: 0.5,
                 ..Material::preset()
             })
-            .wrap();
+            .build_into();
         let light = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World {
             objects: vec![s1, s2, s3, s4],
@@ -732,7 +735,7 @@ mod tests {
                 Vector::new(-1.0, 0.0, 0.0),
                 Vector::new(1.0, 0.0, 0.0),
             ])
-            .wrap();
+            .build_into();
         let ray = Ray::new(Point::new(-0.2, 0.3, -2.0), Vector::new(0.0, 0.0, 1.0));
         let world = World::new(vec![smooth_triangle], vec![]);
         let normal = world.intersect_ray(&ray).finalise_hit().unwrap().normal();

@@ -1,6 +1,6 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, ShapeBuilder, Transform};
-use crate::utils::EPSILON;
+use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, Transform};
+use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Debug)]
 pub struct Triangle {
@@ -12,10 +12,6 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    pub fn builder() -> ShapeBuilder<Triangle> {
-        ShapeBuilder::default()
-    }
-
     pub fn vertices(&self) -> [Point; 3] {
         self.vertices
     }
@@ -67,13 +63,42 @@ impl PrimitiveShape for Triangle {
     }
 }
 
-impl ShapeBuilder<Triangle> {
-    pub fn set_vertices(mut self, vertices: [Point; 3]) -> ShapeBuilder<Triangle> {
-        self.vertices = Some(vertices);
+#[derive(Debug, Default)]
+pub struct TriangleBuilder {
+    frame_transformation: Option<Transform>,
+    material: Option<Material>,
+    vertices: Option<[Point; 3]>,
+}
+
+impl TriangleBuilder {
+    pub fn set_frame_transformation(mut self, frame_transformation: Transform) -> TriangleBuilder {
+        self.frame_transformation = Some(frame_transformation);
         self
     }
 
-    pub fn build(self) -> Triangle {
+    pub fn set_material(mut self, material: Material) -> TriangleBuilder {
+        self.material = Some(material);
+        self
+    }
+
+    pub fn set_vertices(mut self, vertices: [Point; 3]) -> TriangleBuilder {
+        self.vertices = Some(vertices);
+        self
+    }
+}
+
+impl Buildable for Triangle {
+    type Builder = TriangleBuilder;
+
+    fn builder() -> Self::Builder {
+        TriangleBuilder::default()
+    }
+}
+
+impl ConsumingBuilder for TriangleBuilder {
+    type Built = Triangle;
+
+    fn build(self) -> Self::Built {
         let frame_transformation = self.frame_transformation.unwrap_or_default();
         let material = self.material.unwrap_or_default();
         let [v1, v2, v3] = self.vertices.unwrap();
@@ -89,10 +114,11 @@ impl ShapeBuilder<Triangle> {
         };
         triangle
     }
+}
 
-    pub fn wrap(self) -> Shape {
-        let triangle = self.build();
-        Shape::wrap_primitive(triangle)
+impl Into<Shape> for Triangle {
+    fn into(self) -> Shape {
+        Shape::Primitive(Box::new(self))
     }
 }
 

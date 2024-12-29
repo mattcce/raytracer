@@ -1,6 +1,6 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, ShapeBuilder, Transform};
-use crate::utils::EPSILON;
+use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, Transform};
+use crate::utils::{Buildable, ConsumingBuilder, EPSILON};
 
 #[derive(Debug)]
 pub struct Cylinder {
@@ -13,10 +13,6 @@ pub struct Cylinder {
 }
 
 impl Cylinder {
-    pub fn builder() -> ShapeBuilder<Cylinder> {
-        ShapeBuilder::default()
-    }
-
     pub fn y_minimum(&mut self) -> Option<f64> {
         if self.closed_bot {
             None
@@ -145,18 +141,48 @@ impl PrimitiveShape for Cylinder {
     }
 }
 
-impl ShapeBuilder<Cylinder> {
-    pub fn set_y_minimum(mut self, y_minimum: f64) -> ShapeBuilder<Cylinder> {
+#[derive(Debug, Default)]
+pub struct CylinderBuilder {
+    frame_transformation: Option<Transform>,
+    material: Option<Material>,
+    y_minimum: Option<f64>,
+    y_maximum: Option<f64>,
+}
+
+impl CylinderBuilder {
+    pub fn set_frame_transformation(mut self, frame_transformation: Transform) -> CylinderBuilder {
+        self.frame_transformation = Some(frame_transformation);
+        self
+    }
+
+    pub fn set_material(mut self, material: Material) -> CylinderBuilder {
+        self.material = Some(material);
+        self
+    }
+
+    pub fn set_y_minimum(mut self, y_minimum: f64) -> CylinderBuilder {
         self.y_minimum = Some(y_minimum);
         self
     }
 
-    pub fn set_y_maximum(mut self, y_maximum: f64) -> ShapeBuilder<Cylinder> {
+    pub fn set_y_maximum(mut self, y_maximum: f64) -> CylinderBuilder {
         self.y_maximum = Some(y_maximum);
         self
     }
+}
 
-    pub fn build(self) -> Cylinder {
+impl Buildable for Cylinder {
+    type Builder = CylinderBuilder;
+
+    fn builder() -> Self::Builder {
+        CylinderBuilder::default()
+    }
+}
+
+impl ConsumingBuilder for CylinderBuilder {
+    type Built = Cylinder;
+
+    fn build(self) -> Self::Built {
         let frame_transformation = self.frame_transformation.unwrap_or_default();
         let material = self.material.unwrap_or_default();
         let (y_minimum, closed_bot) = match self.y_minimum {
@@ -178,10 +204,11 @@ impl ShapeBuilder<Cylinder> {
         };
         cylinder
     }
+}
 
-    pub fn wrap(self) -> Shape {
-        let cylinder = self.build();
-        Shape::wrap_primitive(cylinder)
+impl Into<Shape> for Cylinder {
+    fn into(self) -> Shape {
+        Shape::Primitive(Box::new(self))
     }
 }
 

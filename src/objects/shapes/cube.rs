@@ -1,6 +1,7 @@
 use crate::collections::{Point, Vector};
-use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, ShapeBuilder, Transform};
+use crate::objects::{Coordinates, Material, PrimitiveShape, Ray, Shape, Transform};
 use crate::utils::floats::EPSILON;
+use crate::utils::{Buildable, ConsumingBuilder};
 
 #[derive(Debug)]
 pub struct Cube {
@@ -9,8 +10,8 @@ pub struct Cube {
 }
 
 impl Cube {
-    pub fn builder() -> ShapeBuilder<Cube> {
-        ShapeBuilder::default()
+    pub fn builder() -> CubeBuilder {
+        CubeBuilder::default()
     }
 
     fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
@@ -81,8 +82,36 @@ impl PrimitiveShape for Cube {
     }
 }
 
-impl ShapeBuilder<Cube> {
-    pub fn build(self) -> Cube {
+#[derive(Debug, Default)]
+pub struct CubeBuilder {
+    frame_transformation: Option<Transform>,
+    material: Option<Material>,
+}
+
+impl CubeBuilder {
+    pub fn set_frame_transformation(mut self, frame_transformation: Transform) -> CubeBuilder {
+        self.frame_transformation = Some(frame_transformation);
+        self
+    }
+
+    pub fn set_material(mut self, material: Material) -> CubeBuilder {
+        self.material = Some(material);
+        self
+    }
+}
+
+impl Buildable for Cube {
+    type Builder = CubeBuilder;
+
+    fn builder() -> Self::Builder {
+        CubeBuilder::default()
+    }
+}
+
+impl ConsumingBuilder for CubeBuilder {
+    type Built = Cube;
+
+    fn build(self) -> Self::Built {
         let frame_transformation = self.frame_transformation.unwrap_or_default();
         let material = self.material.unwrap_or_default();
 
@@ -92,10 +121,11 @@ impl ShapeBuilder<Cube> {
         };
         cube
     }
+}
 
-    pub fn wrap(self) -> Shape {
-        let cube = self.build();
-        Shape::wrap_primitive(cube)
+impl Into<Shape> for Cube {
+    fn into(self) -> Shape {
+        Shape::Primitive(Box::new(self))
     }
 }
 

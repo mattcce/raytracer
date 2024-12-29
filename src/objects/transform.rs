@@ -3,7 +3,7 @@ use std::ops::Mul;
 use crate::collections::{Angle, Matrix, Tuple4};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Transform(Matrix);
+pub struct Transform(pub Matrix);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum TransformKind {
@@ -120,11 +120,13 @@ impl Transform {
         reflection_matrix[[0, 0]] = -1.0;
         Transform(reflection_matrix)
     }
+
     fn reflect_in_y_axis() -> Transform {
         let mut reflection_matrix = Transform::base();
         reflection_matrix[[1, 1]] = -1.0;
         Transform(reflection_matrix)
     }
+
     fn reflect_in_z_axis() -> Transform {
         let mut reflection_matrix = Transform::base();
         reflection_matrix[[2, 2]] = -1.0;
@@ -139,6 +141,7 @@ impl Transform {
         rotation_matrix[[2, 2]] = angle.radians().cos();
         Transform(rotation_matrix)
     }
+
     fn rotate_about_y_axis(mut angle: Angle) -> Transform {
         let mut rotation_matrix = Transform::base();
         rotation_matrix[[0, 0]] = angle.radians().cos();
@@ -147,6 +150,7 @@ impl Transform {
         rotation_matrix[[2, 2]] = angle.radians().cos();
         Transform(rotation_matrix)
     }
+
     fn rotate_about_z_axis(mut angle: Angle) -> Transform {
         let mut rotation_matrix = Transform::base();
         rotation_matrix[[0, 0]] = angle.radians().cos();

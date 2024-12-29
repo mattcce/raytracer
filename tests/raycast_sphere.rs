@@ -3,7 +3,9 @@ use raytracer::prelude::*;
 #[test]
 #[ignore]
 fn raycast_sphere() {
-    let sphere = Sphere::builder().set_material(Material::preset()).wrap();
+    let sphere = Sphere::builder()
+        .set_material(Material::preset())
+        .build_into();
     let light = Light::new(Point::new(10.0, 10.0, 10.0), Colour::new(1.0, 1.0, 1.0));
     let world = World::new(vec![sphere], vec![light]);
     let camera = Camera::new(
@@ -33,7 +35,7 @@ fn raycast_scene() {
             specular: 0.0,
             ..Material::preset()
         })
-        .wrap();
+        .build_into();
     let left_wall = Sphere::builder()
         .set_frame_transformation(Transform::from(vec![
             TransformKind::Scale(10.0, 0.01, 10.0),
@@ -42,7 +44,7 @@ fn raycast_scene() {
             TransformKind::Translate(0.0, 0.0, 5.0),
         ]))
         .set_material(Material::preset())
-        .wrap();
+        .build_into();
     let right_wall = Sphere::builder()
         .set_frame_transformation(Transform::from(vec![
             TransformKind::Scale(10.0, 0.01, 10.0),
@@ -51,7 +53,7 @@ fn raycast_scene() {
             TransformKind::Translate(0.0, 0.0, 5.0),
         ]))
         .set_material(Material::preset())
-        .wrap();
+        .build_into();
     let middle_sphere = Sphere::builder()
         .set_frame_transformation(Transform::new(TransformKind::Translate(-0.5, 1.0, 0.5)))
         .set_material(Material {
@@ -60,7 +62,7 @@ fn raycast_scene() {
             specular: 0.3,
             ..Material::preset()
         })
-        .wrap();
+        .build_into();
     let right_sphere = Sphere::builder()
         .set_frame_transformation(Transform::from(vec![
             TransformKind::Scale(0.5, 0.5, 0.5),
@@ -72,7 +74,7 @@ fn raycast_scene() {
             specular: 0.3,
             ..Material::preset()
         })
-        .wrap();
+        .build_into();
     let left_sphere = Sphere::builder()
         .set_frame_transformation(Transform::from(vec![
             TransformKind::Scale(0.33, 0.33, 0.33),
@@ -84,7 +86,7 @@ fn raycast_scene() {
             specular: 0.3,
             ..Material::preset()
         })
-        .wrap();
+        .build_into();
     let light_source = Light::new(Point::new(-10.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
     let world = World::new(
         vec![

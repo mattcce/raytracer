@@ -1,5 +1,4 @@
 use std::fmt::Debug;
-use std::marker::PhantomData;
 
 use crate::collections::{Point, Vector};
 use crate::objects::*;
@@ -12,19 +11,6 @@ pub enum Shape {
 }
 
 impl Shape {
-    pub fn wrap_primitive<S>(object: S) -> Shape
-    where
-        // here, PrimitiveShapes own everything and thus do not own references that outlive itself
-        S: 'static + PrimitiveShape,
-    {
-        let primitive_shape: Box<dyn PrimitiveShape> = Box::new(object);
-        Shape::Primitive(primitive_shape)
-    }
-
-    pub fn wrap_group(object: Group) -> Shape {
-        Shape::Group(object)
-    }
-
     pub fn intersect_ray<'world: 'ray, 'ray>(
         &'world self,
         ray: &'ray Ray,
@@ -110,62 +96,4 @@ fn transform_through_stack_backwards<T: Transformable>(
     }
 
     object
-}
-
-mod private {
-    pub trait Sealed {}
-    impl<S: Sealed> super::BuildableShape for S {}
-    impl Sealed for crate::objects::shapes::Cone {}
-    impl Sealed for crate::objects::shapes::Cube {}
-    impl Sealed for crate::objects::shapes::Plane {}
-    impl Sealed for crate::objects::shapes::Sphere {}
-    impl Sealed for crate::objects::shapes::Cylinder {}
-    impl Sealed for crate::objects::shapes::Triangle {}
-    impl Sealed for crate::objects::shapes::SmoothTriangle {}
-    impl Sealed for crate::objects::group::Group {}
-}
-pub trait BuildableShape {}
-
-#[derive(Debug)]
-pub struct ShapeBuilder<Shp: BuildableShape> {
-    pub(crate) shape: PhantomData<Shp>,
-    pub(crate) frame_transformation: Option<Transform>,
-    pub(crate) material: Option<Material>,
-    pub(crate) y_minimum: Option<f64>,
-    pub(crate) y_maximum: Option<f64>,
-    pub(crate) vertices: Option<[Point; 3]>,
-    pub(crate) normals: Option<[Vector; 3]>,
-    pub(crate) objects: Option<Vec<Shape>>,
-}
-
-impl<Shp: BuildableShape> ShapeBuilder<Shp> {
-    pub fn set_frame_transformation(
-        mut self,
-        frame_transformation: Transform,
-    ) -> ShapeBuilder<Shp> {
-        self.frame_transformation = Some(frame_transformation);
-        self
-    }
-}
-
-impl<Shp: BuildableShape + PrimitiveShape> ShapeBuilder<Shp> {
-    pub fn set_material(mut self, material: Material) -> ShapeBuilder<Shp> {
-        self.material = Some(material);
-        self
-    }
-}
-
-impl<Shp: BuildableShape> Default for ShapeBuilder<Shp> {
-    fn default() -> ShapeBuilder<Shp> {
-        ShapeBuilder {
-            shape: PhantomData,
-            frame_transformation: None,
-            material: None,
-            y_minimum: None,
-            y_maximum: None,
-            vertices: None,
-            normals: None,
-            objects: None,
-        }
-    }
 }
