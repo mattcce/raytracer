@@ -1,13 +1,6 @@
 use crate::collections::{Angle, Matrix, Tuple4};
 use std::ops::Mul;
 
-const IDENTITY: [[f64; 4]; 4] = [
-    [1.0, 0.0, 0.0, 0.0],
-    [0.0, 1.0, 0.0, 0.0],
-    [0.0, 0.0, 1.0, 0.0],
-    [0.0, 0.0, 0.0, 1.0],
-];
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct Transform(Matrix);
 
@@ -29,6 +22,13 @@ pub enum Axis {
 }
 
 impl Transform {
+    const IDENTITY: [[f64; 4]; 4] = [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ];
+
     pub fn new(transform_kind: TransformKind) -> Transform {
         match transform_kind {
             TransformKind::Identity => Transform::identity(),
@@ -84,7 +84,7 @@ impl From<Vec<TransformKind>> for Transform {
 
 impl Transform {
     fn base() -> Matrix {
-        Matrix::from(&IDENTITY.iter().map(|row| row.to_vec()).collect())
+        Matrix::from(&Transform::IDENTITY.iter().map(|row| row.to_vec()).collect())
     }
 
     fn identity() -> Transform {
