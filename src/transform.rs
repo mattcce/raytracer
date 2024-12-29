@@ -165,12 +165,12 @@ impl Mul<&Matrix> for Transform {
     }
 }
 
-pub trait Transformable<T> {
+pub trait Transformable {
     // transform is consuming because it accepts Tuple4 types which are Copy
-    fn transform(self, transform: &Transform) -> T;
+    fn transform(self, transform: &Transform) -> Self;
 }
 
-impl<T: Tuple4 + From<Matrix>> Transformable<T> for T {
+impl<T: Tuple4 + From<Matrix>> Transformable for T {
     fn transform(self, transform: &Transform) -> T {
         T::from(transform.clone() * &Matrix::from(self))
     }
