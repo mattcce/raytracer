@@ -2,11 +2,10 @@ use std::ops::Index;
 
 use crate::collections::{Colour, Point, Vector};
 use crate::utils::Shape;
+use crate::utils::floats::EPSILON;
 
 use super::Light;
 use super::Ray;
-
-const EPSILON: f64 = 1e-6;
 
 #[derive(Clone, Debug)]
 pub struct RawIntersect<'a, S>

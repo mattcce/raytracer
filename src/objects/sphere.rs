@@ -19,19 +19,12 @@ impl Sphere {
 }
 
 impl Shape for Sphere {
-    fn normal_at(&self, world_point: Point) -> Vector {
-        let object_point = world_point.transform(&self.transform.invert());
-        let object_normal = object_point - Point::new(0.0, 0.0, 0.0);
-        let world_normal = object_normal.transform(&self.transform.invert().transpose());
-        world_normal.normalise()
+    fn material(&self) -> &Material {
+        &self.material
     }
 
     fn transformation_matrix(&self) -> &Transform {
         &self.transform
-    }
-
-    fn material(&self) -> &Material {
-        &self.material
     }
 }
 
@@ -54,6 +47,10 @@ impl Preset for Sphere {
 }
 
 impl LocallyIntersectable for Sphere {
+    fn local_normal_at(&self, local_point: Point) -> Vector {
+        local_point - Point::new(0.0, 0.0, 0.0)
+    }
+
     fn local_intersect(&self, local_ray: &Ray) -> Option<Vec<f64>> {
         let sphere_to_ray = local_ray.origin - Point::zero();
         let a = local_ray.direction.dot(local_ray.direction);
