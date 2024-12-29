@@ -12,6 +12,14 @@ impl Vector {
     pub fn new(x: f64, y: f64, z: f64) -> Vector {
         Vector { x, y, z }
     }
+
+    pub fn zero() -> Vector {
+        Vector {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
+    }
 }
 
 impl Add<Vector> for Vector {
@@ -146,6 +154,17 @@ mod tests {
             z: 3.0,
         };
         assert_eq!(vector_new, vector_direct);
+    }
+
+    #[test]
+    fn create_zero_vector() {
+        let vector = Vector::zero();
+        let resulting_vector = Vector {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
+        assert_eq!(vector, resulting_vector);
     }
 
     #[test]

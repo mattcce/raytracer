@@ -12,6 +12,14 @@ impl Point {
     pub fn new(x: f64, y: f64, z: f64) -> Point {
         Point { x, y, z }
     }
+
+    pub fn zero() -> Point {
+        Point {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
+    }
 }
 
 impl Add<Vector> for Point {
@@ -91,6 +99,17 @@ mod tests {
             z: 4.0,
         };
         assert_eq!(point_new, point_direct);
+    }
+
+    #[test]
+    fn create_zero_origin() {
+        let point = Point::zero();
+        let resulting_point = Point {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
+        assert_eq!(point, resulting_point);
     }
 
     #[test]
