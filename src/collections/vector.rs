@@ -90,6 +90,21 @@ impl Div<f64> for Vector {
     }
 }
 
+impl Vector {
+    pub fn magnitude(self) -> f64 {
+        (self.x.powf(2.0_f64) + self.y.powf(2.0_f64) + self.z.powf(2.0_f64)).sqrt()
+    }
+
+    pub fn normalise(self) -> Vector {
+        let magnitude = self.magnitude();
+        Vector {
+            x: self.x / magnitude,
+            y: self.y / magnitude,
+            z: self.z / magnitude,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -147,5 +162,19 @@ mod tests {
         let scalar = 3.0_f64;
         let resulting_vector = Vector::new(1.0, 2.0, 3.0);
         assert_eq!(vector / scalar, resulting_vector);
+    }
+
+    #[test]
+    fn magnitude_of_vector() {
+        let vector = Vector::new(1.0, 2.0, 2.0);
+        let resulting_magnitude = 3.0_f64;
+        assert_eq!(vector.magnitude(), resulting_magnitude);
+    }
+
+    #[test]
+    fn normalise_vector() {
+        let vector = Vector::new(2.0, 3.0, 6.0);
+        let resulting_vector = Vector::new(2.0 / 7.0, 3.0 / 7.0, 6.0 / 7.0);
+        assert_eq!(vector.normalise(), resulting_vector);
     }
 }
