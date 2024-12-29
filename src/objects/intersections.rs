@@ -2,7 +2,9 @@ use super::Light;
 use super::Ray;
 use super::Sphere;
 use crate::collections::{Colour, Point, Vector};
-use std::ops::{Index};
+use std::ops::Index;
+
+const EPSILON: f64 = 1e-6;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RawIntersect<'a> {
@@ -18,7 +20,7 @@ impl<'a> RawIntersect<'a> {
 
     pub fn precompute(&self) -> ComputedIntersect<'_> {
         let t = self.t;
-        let object = &self.object;
+        let object = self.object;
         let ray = self.ray;
         let target = self.ray.position(t);
         let eyev = -self.ray.direction;
@@ -31,6 +33,7 @@ impl<'a> RawIntersect<'a> {
             _x if _x >= 0.0 => false,
             _ => panic!(),
         };
+        let over_point = target + normal * EPSILON;
         ComputedIntersect {
             t,
             object,
@@ -39,6 +42,7 @@ impl<'a> RawIntersect<'a> {
             eyev,
             normal,
             inside,
+            over_point,
         }
     }
 }
@@ -53,11 +57,18 @@ pub struct ComputedIntersect<'a> {
     pub eyev: Vector,
     pub normal: Vector,
     pub inside: bool,
+    pub over_point: Point,
 }
 
 impl ComputedIntersect<'_> {
-    pub fn shade(&self, light: Light) -> Colour {
-        light.shade_phong(self.object.material, self.target, self.eyev, self.normal)
+    pub fn shade(&self, light: Light, shadowed: bool) -> Colour {
+        light.shade_phong(
+            self.object.material,
+            self.over_point,
+            self.eyev,
+            self.normal,
+            shadowed,
+        )
     }
 }
 
@@ -94,13 +105,6 @@ impl<'a, 'b: 'a> Intersections<'a> {
             }
         }
         return None;
-    }
-
-    pub fn shade_hit(&self, light: Light) -> Colour {
-        match self.hit() {
-            Some(intersect) => intersect.precompute().shade(light),
-            None => Colour::new(0.0, 0.0, 0.0),
-        }
     }
 }
 
@@ -153,6 +157,7 @@ mod tests {
             eyev: Vector::new(0.0, 0.0, -1.0),
             normal: Vector::new(0.0, 0.0, -1.0),
             inside: false,
+            over_point: Point::new(0.0, 0.0, -1.0) + Vector::new(0.0, 0.0, -1.0) * EPSILON,
         };
         assert_eq!(raw_intersect.precompute(), resulting_computed_intersect);
     }
@@ -223,5 +228,21 @@ mod tests {
         let intersections = Intersections::new(vec![intersect1, intersect2, intersect3]);
         let resulting_hit = &intersections.0[1];
         assert!(std::ptr::eq(intersections.hit().unwrap(), resulting_hit));
+    }
+
+    use crate::objects::{Transform, TransformKind};
+    use crate::utils::Preset;
+
+    #[test]
+    fn hit_offset_point() {
+        let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let shape = Sphere {
+            transform: Transform::new(TransformKind::Translate(0.0, 0.0, 1.0)),
+            ..Sphere::preset()
+        };
+        let raw_intersect = RawIntersect::new(5.0, &shape, &ray);
+        let computed_intersect = raw_intersect.precompute();
+        assert!(computed_intersect.over_point.z < -EPSILON / 2.0);
+        assert!(computed_intersect.target.z > computed_intersect.over_point.z);
     }
 }

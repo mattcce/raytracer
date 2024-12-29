@@ -1,5 +1,6 @@
-use super::{Material};
+use super::{Intersectable, Material, Ray};
 use crate::collections::{Colour, Point, Vector};
+use crate::scenes::World;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Light {
@@ -21,12 +22,16 @@ impl Light {
         target: Point,
         eyev: Vector,
         normal: Vector,
+        shadowed: bool,
     ) -> Colour {
         let effective_colour = material.colour * self.intensity;
         let lightv = (self.position - target).normalise();
         let ambient = effective_colour * material.ambient;
-        let light_dot_normal = lightv.dot(normal);
+        if shadowed {
+            return ambient;
+        }
 
+        let light_dot_normal = lightv.dot(normal);
         let diffuse;
         let specular;
         if light_dot_normal < 0.0 {
@@ -73,7 +78,7 @@ mod tests {
         let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let resulting_colour = Colour::new(1.9, 1.9, 1.9);
         assert_eq!(
-            light.shade_phong(material, position, eyev, normalv),
+            light.shade_phong(material, position, eyev, normalv, false),
             resulting_colour
         );
     }
@@ -87,7 +92,7 @@ mod tests {
         let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let resulting_colour = Colour::new(1.0, 1.0, 1.0);
         assert_eq!(
-            light.shade_phong(material, position, eyev, normalv),
+            light.shade_phong(material, position, eyev, normalv, false),
             resulting_colour
         );
     }
@@ -129,7 +134,24 @@ mod tests {
         let light = Light::new(Point::new(0.0, 0.0, 10.0), Colour::new(1.0, 1.0, 1.0));
         let resulting_colour = Colour::new(0.1, 0.1, 0.1);
         assert_eq!(
-            light.shade_phong(material, position, eyev, normalv),
+            light.shade_phong(material, position, eyev, normalv, false),
+            resulting_colour
+        );
+    }
+
+    #[test]
+    fn no_shadow() {}
+
+    #[test]
+    fn light_in_shadow() {
+        let material = Material::preset();
+        let position = Point::zero();
+        let eyev = Vector::new(0.0, 0.0, -1.0);
+        let normalv = Vector::new(0.0, 0.0, -1.0);
+        let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
+        let resulting_colour = Colour::new(0.1, 0.1, 0.1);
+        assert_eq!(
+            light.shade_phong(material, position, eyev, normalv, true),
             resulting_colour
         );
     }
