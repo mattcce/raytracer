@@ -20,11 +20,9 @@ impl Ray {
     }
 }
 
-pub trait Intersectable<S>
-    where
-        S: Shape + ?Sized,
+pub trait Intersectable
 {
-    fn intersect<'a>(&'a self, ray: &'a Ray) -> Intersections<'a, S>;
+    fn intersect<'a>(&'a self, ray: &'a Ray) -> Intersections<'a, Self> where Self: Shape;
 }
 
 impl Transformable for Ray {

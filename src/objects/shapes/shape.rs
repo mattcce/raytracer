@@ -20,8 +20,8 @@ pub trait Shape: Debug {
     fn local_intersect(&self, local_ray: &Ray) -> Option<Vec<f64>>;
 }
 
-impl<S: Shape + ?Sized> Intersectable<S> for S {
-    fn intersect<'a>(&'a self, world_ray: &'a Ray) -> Intersections<'a, S> {
+impl<S: Shape + ?Sized> Intersectable for S {
+    fn intersect<'a>(&'a self, world_ray: &'a Ray) -> Intersections<'a, Self> {
         let local_ray = world_ray.transform(&self.transformation_matrix().invert());
         match self.local_intersect(&local_ray) {
             None => Intersections::default(),
