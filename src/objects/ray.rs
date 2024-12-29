@@ -1,5 +1,5 @@
-use super::Sphere;
-use super::{Intersect, Intersections};
+
+use super::{Intersections};
 use super::{Transform, Transformable};
 use crate::collections::{Point, Vector};
 
@@ -19,8 +19,8 @@ impl Ray {
     }
 }
 
-pub trait Intersectable<I> {
-    fn intersect<'a>(&'a self, object: &'a I) -> Intersections<'a>;
+pub trait Intersectable {
+    fn intersect<'a>(&'a self, ray: &'a Ray) -> Intersections<'a>;
 }
 
 impl Transformable for Ray {
@@ -35,7 +35,7 @@ impl Transformable for Ray {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::objects::TransformKind;
+    
 
     #[test]
     fn create_ray() {

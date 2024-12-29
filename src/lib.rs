@@ -8,6 +8,7 @@ pub mod prelude {
     pub use super::collections::prelude::*;
     pub use super::objects::prelude::*;
     pub use super::scenes::prelude::*;
+    pub use super::utils::prelude::*;
 }
 
 /*

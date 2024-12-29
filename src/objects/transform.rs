@@ -1,4 +1,5 @@
 use crate::collections::{Angle, Matrix, Tuple4};
+use crate::utils::Preset;
 use std::ops::Mul;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -65,6 +66,14 @@ impl Transform {
         Transform(other.0.clone() * &self.0)
     }
 }
+
+impl Default for Transform {
+    fn default() -> Transform {
+        Transform::new(TransformKind::Identity)
+    }
+}
+
+impl Preset for Transform {}
 
 impl From<Matrix> for Transform {
     fn from(matrix: Matrix) -> Transform {
