@@ -9,8 +9,8 @@ pub struct Material {
     shininess: f64,
 }
 
-impl Material {
-    pub fn default() -> Material {
+impl Default for Material {
+    fn default() -> Material {
         Material {
             colour: Colour::new(1.0, 1.0, 1.0),
             ambient: 0.1,
