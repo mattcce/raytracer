@@ -1,12 +1,25 @@
 use crate::collections::{Point, Vector};
 use crate::intersections::{Intersect, Intersections};
+use crate::transform::{Transform, TransformKind, Transformable};
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Sphere;
+#[derive(Clone, Debug, PartialEq)]
+pub struct Sphere {
+    transform: Transform,
+}
 
 impl Sphere {
     pub fn new() -> Sphere {
-        Sphere
+        Sphere {
+            transform: Transform::new(TransformKind::Identity),
+        }
+    }
+
+    pub fn set_transform(&mut self, transform: &Transform) {
+        self.transform = transform.clone();
+    }
+
+    pub fn get_transform(&self) -> &Transform {
+        &self.transform
     }
 }
 
@@ -26,9 +39,10 @@ impl Ray {
     }
 
     pub fn intersect<'a>(&'a self, s: &'a Sphere) -> Option<Intersections<'a>> {
-        let sphere_to_ray = self.origin - Point::zero();
-        let a = self.direction.dot(self.direction);
-        let b = 2.0 * self.direction.dot(sphere_to_ray);
+        let transformed_ray = self.transform(&s.get_transform().invert());
+        let sphere_to_ray = transformed_ray.origin - Point::zero();
+        let a = transformed_ray.direction.dot(transformed_ray.direction);
+        let b = 2.0 * transformed_ray.direction.dot(sphere_to_ray);
         let c = sphere_to_ray.dot(sphere_to_ray) - 1.0;
         let discriminant = b.powf(2.0) - 4.0 * a * c;
         let sqrt_discriminant = discriminant.sqrt();
@@ -46,9 +60,34 @@ impl Ray {
     }
 }
 
+impl Transformable for Ray {
+    fn transform(self, transform: &Transform) -> Self {
+        Ray::new(
+            self.origin.transform(transform),
+            self.direction.transform(transform),
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn create_sphere() {
+        let sphere = Sphere::new();
+        let resulting_sphere = Sphere {
+            transform: Transform::new(TransformKind::Identity),
+        };
+        assert_eq!(sphere, resulting_sphere);
+    }
+
+    #[test]
+    fn transform_sphere() {
+        let mut sphere = Sphere::new();
+        let transform = Transform::new(TransformKind::Translate(5.0, 0.0, 0.0));
+        sphere.set_transform(&transform);
+    }
 
     #[test]
     fn create_ray() {
@@ -113,5 +152,24 @@ mod tests {
         let intersections = ray.intersect(&sphere).unwrap();
         assert_eq!(intersections[0].t(), -6.0);
         assert_eq!(intersections[1].t(), -4.0);
+    }
+
+    #[test]
+    fn ray_intersects_transformed_sphere() {
+        let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let mut sphere = Sphere::new();
+        sphere.set_transform(&Transform::new(TransformKind::Scale(2.0, 2.0, 2.0)));
+        let intersections = ray.intersect(&sphere).unwrap();
+        assert_eq!(intersections[0].t(), 3.0);
+        assert_eq!(intersections[1].t(), 7.0);
+    }
+
+    #[test]
+    fn ray_does_not_intersect_transformed_sphere() {
+        let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let mut sphere = Sphere::new();
+        sphere.set_transform(&Transform::new(TransformKind::Translate(5.0, 0.0, 0.0)));
+        let intersections = ray.intersect(&sphere);
+        assert_eq!(intersections, None);
     }
 }
