@@ -13,7 +13,7 @@ impl Sphere {
         }
     }
 
-    pub fn get_transform(&self) -> &Transform {
+    pub fn transform(&self) -> &Transform {
         &self.transform
     }
 

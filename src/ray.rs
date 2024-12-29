@@ -19,7 +19,7 @@ impl Ray {
     }
 
     pub fn intersect<'a>(&'a self, s: &'a Sphere) -> Option<Intersections<'a>> {
-        let transformed_ray = self.transform(&s.get_transform().invert());
+        let transformed_ray = self.transform(&s.transform().invert());
         let sphere_to_ray = transformed_ray.origin - Point::zero();
         let a = transformed_ray.direction.dot(transformed_ray.direction);
         let b = 2.0 * transformed_ray.direction.dot(sphere_to_ray);
