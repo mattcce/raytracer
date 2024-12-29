@@ -7,16 +7,8 @@ const PPM_HEADER: &str = "P3";
 const PIXEL_MAX: u64 = 255;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct CanvasSize {
-    width: u64,
-    height: u64,
-}
-
-impl CanvasSize {
-    pub fn new(width: u64, height: u64) -> CanvasSize {
-        CanvasSize { width, height }
-    }
-}
+pub struct Width(pub usize);
+pub struct Height(pub usize);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Pixel {
@@ -54,30 +46,36 @@ pub enum WriteError {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Canvas {
-    size: CanvasSize,
+    size: Size,
     pixels: Vec<Vec<Pixel>>,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Size {
+    width: usize,
+    height: usize,
+}
+
 impl Canvas {
-    pub fn new(size: CanvasSize) -> Canvas {
-        let mut canvas: Vec<Vec<Pixel>> = Vec::with_capacity(size.height as usize);
-        for _row in 0..size.height {
-            let mut row_pixels = Vec::with_capacity(size.width as usize);
-            for _column in 0..size.width {
+    pub fn new(Width(width): Width, Height(height): Height) -> Canvas {
+        let mut canvas: Vec<Vec<Pixel>> = Vec::with_capacity(height);
+        for _row in 0..height {
+            let mut row_pixels = Vec::with_capacity(width);
+            for _column in 0..width {
                 row_pixels.push(Pixel::paint(Colour::new(0.0, 0.0, 0.0)));
             }
             canvas.push(row_pixels);
         }
         Canvas {
-            size,
+            size: Size { width, height },
             pixels: canvas,
         }
     }
 
     pub fn paint_colour(
         &mut self,
-        column: u64,
-        row: u64,
+        column: usize,
+        row: usize,
         colour: Colour,
     ) -> Result<(), WriteError> {
         match (column, row) {
@@ -145,14 +143,16 @@ mod tests {
 
     #[test]
     fn create_canvas() {
-        let size = CanvasSize::new(1, 2);
-        let canvas = Canvas::new(size);
+        let canvas = Canvas::new(Width(1), Height(2));
         let black_pixel = Pixel::paint(Colour::new(0.0, 0.0, 0.0));
         let resulting_canvas = vec![vec![black_pixel], vec![black_pixel]];
         assert_eq!(
             canvas,
             Canvas {
-                size: size,
+                size: Size {
+                    width: 1,
+                    height: 2,
+                },
                 pixels: resulting_canvas,
             }
         );
@@ -160,8 +160,7 @@ mod tests {
 
     #[test]
     fn create_and_paint_canvas() {
-        let size = CanvasSize::new(2, 3);
-        let mut canvas = Canvas::new(size);
+        let mut canvas = Canvas::new(Width(2), Height(3));
         let black_pixel = Pixel::paint(Colour::new(0.0, 0.0, 0.0));
         let grey_colour = Colour::new(0.5, 0.5, 0.5);
         let grey_pixel = Pixel::paint(Colour::new(0.5, 0.5, 0.5));
@@ -174,7 +173,10 @@ mod tests {
         assert_eq!(
             canvas,
             Canvas {
-                size: size,
+                size: Size {
+                    width: 2,
+                    height: 3,
+                },
                 pixels: resulting_canvas,
             }
         );
@@ -182,7 +184,7 @@ mod tests {
 
     #[test]
     fn write_ppm_small_canvas() {
-        let mut canvas = Canvas::new(CanvasSize::new(2, 2));
+        let mut canvas = Canvas::new(Width(2), Height(2));
         canvas
             .paint_colour(0, 0, Colour::new(1.0, 1.0, 1.0))
             .unwrap();
@@ -196,7 +198,7 @@ mod tests {
 
     #[test]
     fn write_ppm_large_canvas() {
-        let mut canvas = Canvas::new(CanvasSize::new(10, 2));
+        let mut canvas = Canvas::new(Width(10), Height(2));
         for pixel in 0..10 {
             canvas
                 .paint_colour(pixel, 0, Colour::new(1.0, 1.0, 1.0))
@@ -210,7 +212,7 @@ mod tests {
     #[test]
     #[ignore]
     fn output_canvas_to_ppm() {
-        let mut canvas = Canvas::new(CanvasSize::new(2, 2));
+        let mut canvas = Canvas::new(Width(2), Height(2));
         canvas
             .paint_colour(0, 0, Colour::new(1.0, 1.0, 1.0))
             .unwrap();

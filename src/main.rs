@@ -32,15 +32,15 @@ fn main() {
         wind: Vector::new(-0.01, 0.0, 0.0),
         projectile: projectile1,
     };
-    let mut canvas = canvas::Canvas::new(canvas::CanvasSize::new(900, 550));
+    let mut canvas = canvas::Canvas::new(canvas::Width(900), canvas::Height(550));
 
     loop {
         let pos_x = match scene1.projectile.position.x.round() {
-            x if x >= 0.0 => x as u64,
+            x if x >= 0.0 => x as usize,
             _ => break,
         };
         let pos_y = match scene1.projectile.position.y.round() {
-            y if y >= 0.0 => 550 - y as u64,
+            y if y >= 0.0 => 550 - y as usize,
             _ => break,
         };
         if let Err(_) = canvas.paint_colour(pos_x, pos_y, Colour::new(1.0, 0.0, 0.0)) {
