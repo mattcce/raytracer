@@ -1,4 +1,4 @@
-use super::{Tuple4, Vector};
+use super::{Matrix, Tuple4, Vector};
 use std::ops::{Add, Neg, Sub};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -68,6 +68,16 @@ impl Tuple4 for Point {
     }
 }
 
+impl From<Matrix> for Point {
+    fn from(matrix: Matrix) -> Self {
+        assert_eq!(matrix.rows(), 4);
+        assert_eq!(matrix.cols(), 1);
+        assert_eq!(matrix[[3, 0]], 1.0);
+
+        Point::new(matrix[[0, 0]], matrix[[1, 0]], matrix[[2, 0]])
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -119,5 +129,21 @@ mod tests {
         let point = Point::new(1.0, 3.0, 8.0);
         let resulting_tuple4 = [1.0, 3.0, 8.0, 1.0];
         assert_eq!(point.to_tuple4(), resulting_tuple4);
+    }
+
+    #[test]
+    fn matrix_to_point() {
+        let point = Point::new(1.0, 5.0, 2.0);
+        let matrix = Matrix::from(point);
+        assert_eq!(Point::from(matrix), point);
+    }
+
+    #[test]
+    #[should_panic]
+    fn non_column_matrix_to_point() {
+        let point = Point::new(1.0, 5.0, 2.0);
+        let mut matrix = Matrix::from(point);
+        matrix[[3, 0]] = 10.0;
+        assert_eq!(Point::from(matrix), point);
     }
 }
