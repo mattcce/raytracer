@@ -15,7 +15,9 @@ pub trait Shape: Debug {
     }
 
     fn material(&self) -> &Material;
+    fn material_mut(&mut self) -> &mut Material;
     fn transformation_matrix(&self) -> &Transform;
+    fn transformation_matrix_mut(&mut self) -> &mut Transform;
     fn local_normal_at(&self, local_point: Point) -> Vector;
     fn local_intersect(&self, local_ray: &Ray) -> Option<Vec<f64>>;
 }

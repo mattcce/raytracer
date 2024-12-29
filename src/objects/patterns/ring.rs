@@ -45,6 +45,9 @@ mod tests {
         assert_eq!(stripe_pattern.colour_at(Point::new(0.0, 0.0, 0.0)), colour1);
         assert_eq!(stripe_pattern.colour_at(Point::new(1.0, 0.0, 0.0)), colour2);
         assert_eq!(stripe_pattern.colour_at(Point::new(0.0, 0.0, 1.0)), colour2);
-        assert_eq!(stripe_pattern.colour_at(Point::new(0.708, 0.0, 0.708)), colour2);
+        assert_eq!(
+            stripe_pattern.colour_at(Point::new(0.708, 0.0, 0.708)),
+            colour2
+        );
     }
 }

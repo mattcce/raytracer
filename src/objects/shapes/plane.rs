@@ -24,8 +24,16 @@ impl Shape for Plane {
         &self.material
     }
 
+    fn material_mut(&mut self) -> &mut Material {
+        &mut self.material
+    }
+
     fn transformation_matrix(&self) -> &Transform {
         &self.transform
+    }
+
+    fn transformation_matrix_mut(&mut self) -> &mut Transform {
+        &mut self.transform
     }
 
     fn local_normal_at(&self, _local_point: Point) -> Vector {
@@ -42,14 +50,7 @@ impl Shape for Plane {
     }
 }
 
-impl Preset for Plane {
-    fn preset() -> Plane {
-        Plane {
-            transform: Transform::preset(),
-            material: Material::preset(),
-        }
-    }
-}
+impl Preset for Plane {}
 
 #[cfg(test)]
 mod tests {

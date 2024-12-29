@@ -54,6 +54,7 @@ impl Light {
 
 #[cfg(test)]
 mod tests {
+    use crate::scenes::World;
     use crate::utils::Preset;
 
     use super::*;
@@ -141,7 +142,13 @@ mod tests {
     }
 
     #[test]
-    fn no_shadow() {}
+    fn no_shadow() {
+        let world = World::preset();
+        assert_eq!(
+            world.is_shadowed_point(&world.lights[0], Point::new(0.0, 10.0, 0.0)),
+            false
+        );
+    }
 
     #[test]
     fn light_in_shadow() {

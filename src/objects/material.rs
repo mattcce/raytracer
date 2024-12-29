@@ -8,6 +8,7 @@ pub struct Material {
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
+    pub reflectance: f64,
 }
 
 impl Default for Material {
@@ -18,6 +19,7 @@ impl Default for Material {
             diffuse: 0.0,
             specular: 0.0,
             shininess: 0.0,
+            reflectance: 0.0,
         }
     }
 }
@@ -30,6 +32,7 @@ impl Preset for Material {
             diffuse: 0.9,
             specular: 0.9,
             shininess: 200.0,
+            reflectance: 0.0,
         }
     }
 }

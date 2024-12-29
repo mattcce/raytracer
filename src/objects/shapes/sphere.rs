@@ -22,8 +22,16 @@ impl Shape for Sphere {
         &self.material
     }
 
+    fn material_mut(&mut self) -> &mut Material {
+        &mut self.material
+    }
+
     fn transformation_matrix(&self) -> &Transform {
         &self.transform
+    }
+
+    fn transformation_matrix_mut(&mut self) -> &mut Transform {
+        &mut self.transform
     }
 
     fn local_normal_at(&self, local_point: Point) -> Vector {

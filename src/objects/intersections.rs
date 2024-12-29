@@ -41,6 +41,7 @@ impl<'a, S> RawIntersect<'a, S>
             _ => panic!(),
         };
         let over_point = target + normal * EPSILON;
+        let reflected_ray = Ray::new(over_point, ray.direction.reflect(normal));
         ComputedIntersect {
             t,
             object,
@@ -50,6 +51,7 @@ impl<'a, S> RawIntersect<'a, S>
             normal,
             inside,
             over_point,
+            reflected_ray,
         }
     }
 }
@@ -68,6 +70,7 @@ pub struct ComputedIntersect<'a, S>
     pub normal: Vector,
     pub inside: bool,
     pub over_point: Point,
+    pub reflected_ray: Ray,
 }
 
 impl<S> ComputedIntersect<'_, S>
@@ -152,7 +155,8 @@ impl<'a, S> Index<usize> for Intersections<'a, S>
 
 #[cfg(test)]
 mod tests {
-    use crate::objects::{Sphere, Transform, TransformKind};
+    use crate::objects::{Plane, Sphere, Transform, TransformKind};
+    use crate::scenes::World;
     use crate::utils::Preset;
 
     use super::*;
@@ -225,5 +229,20 @@ mod tests {
         let computed_intersect = raw_intersect.precompute();
         assert!(computed_intersect.over_point.z < -EPSILON / 2.0);
         assert!(computed_intersect.target.z > computed_intersect.over_point.z);
+    }
+
+    #[test]
+    fn precompute_reflection_vector() {
+        let plane = Plane::preset();
+        let ray = Ray::new(
+            Point::new(0.0, 1.0, -1.0),
+            Vector::new(0.0, -(2.0_f64.sqrt()) / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+        let raw_intersect = RawIntersect::new(2.0_f64.sqrt() / 2.0, &plane, &ray);
+        let computed_intersect = raw_intersect.precompute();
+        assert_eq!(
+            computed_intersect.reflected_ray.direction,
+            Vector::new(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
+        );
     }
 }

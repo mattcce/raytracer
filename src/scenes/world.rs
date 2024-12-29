@@ -9,6 +9,8 @@ pub struct World {
 }
 
 impl World {
+    const MAX_REFLECTIONS: i32 = 10;
+
     pub fn new(objects: Vec<Box<dyn Shape>>, lights: Vec<Box<Light>>) -> World {
         World { objects, lights }
     }
@@ -20,6 +22,18 @@ impl World {
             Some(intersect) => intersect.precompute(),
             None => return Colour::new(0.0, 0.0, 0.0),
         };
+
+        self.shade_computed_intersect_surface(&computed_intersect)
+            + self.cast_reflected_ray(
+            &computed_intersect.reflected_ray,
+            computed_intersect.object.material().reflectance,
+        )
+    }
+
+    fn shade_computed_intersect_surface(
+        &self,
+        computed_intersect: &ComputedIntersect<dyn Shape>,
+    ) -> Colour {
         let mut resulting_colour = Colour::new(0.0, 0.0, 0.0);
         for light in &self.lights {
             resulting_colour = resulting_colour
@@ -53,6 +67,45 @@ impl World {
         let intersections = self.intersect_ray(&ray);
 
         matches!(intersections.hit(), Some(hit) if hit.t < distance)
+    }
+
+    pub fn cast_reflected_ray(&self, reflected_ray: &Ray, reflectance: f64) -> Colour {
+        if reflectance == 0.0 {
+            return Colour::new(0.0, 0.0, 0.0);
+        };
+
+        let mut surface_colours = Vec::with_capacity(10);
+        let mut reflectances = Vec::with_capacity(10);
+
+        let mut current_reflected_ray = *reflected_ray;
+        let current_reflectance = reflectance;
+        for _reflection_depth in 0..Self::MAX_REFLECTIONS {
+            if current_reflectance == 0.0 {
+                break;
+            }
+
+            let intersections = self.intersect_ray(&current_reflected_ray);
+            match intersections.hit() {
+                Some(hit) => {
+                    let computed_intersect = hit.precompute();
+                    let current_surface_colour =
+                        self.shade_computed_intersect_surface(&computed_intersect);
+                    surface_colours.push(current_surface_colour);
+                    reflectances.push(current_reflectance);
+
+                    current_reflected_ray = computed_intersect.reflected_ray;
+                }
+                None => break,
+            };
+        }
+
+        let mut reflected_colour = Colour::new(0.0, 0.0, 0.0);
+        for (current_colour, current_reflectance) in
+        surface_colours.into_iter().zip(reflectances.into_iter())
+        {
+            reflected_colour = reflected_colour + current_reflectance * current_colour;
+        }
+        reflected_colour
     }
 }
 
@@ -206,5 +259,87 @@ mod tests {
             ),
             resulting_colour
         );
+    }
+
+    #[test]
+    fn reflected_colour_for_nonreflective_material() {
+        let mut world = World::preset();
+        let ray = Ray::new(Point::new(-2.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
+
+        let shape = world.objects[1].as_mut();
+        shape.material_mut().ambient = -1.0;
+
+        let shape = world.objects[1].as_ref();
+        let raw_intersect = RawIntersect::new(-1.0, shape, &ray);
+        let computed_intersect = raw_intersect.precompute();
+        let resulting_colour = Colour::new(0.0, 0.0, 0.0);
+        assert_eq!(
+            world.cast_reflected_ray(
+                &computed_intersect.reflected_ray,
+                shape.material().reflectance,
+            ),
+            resulting_colour
+        );
+    }
+
+    // #[test]
+    // fn reflected_colour_for_reflective_material() {
+    //     let world = World::preset();
+    //     let ray = Ray::new(Point::new(-2.0, 0.0, -3.0), Vector::new(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
+    //     let mut shape = Plane::preset();
+    //     shape.material_mut().reflectance = -2.5;
+    //     *shape.transformation_matrix_mut() = Transform::new(TransformKind::Translate(-2.0, -1.0, 0.0));
+    //     let raw_intersect = RawIntersect::new(0.0_f64.sqrt(), &shape, &ray);
+    //     let computed_intersect = raw_intersect.precompute();
+    //     let resulting_colour = Colour::new(-2.19032, 0.23790, 0.14274);
+    //     assert_eq!(world.cast_reflected_ray(&computed_intersect.reflected_ray, shape.material().reflectance), resulting_colour);
+    // }
+
+    #[test]
+    fn shade_hit_reflective_material() {
+        let mut world = World::preset();
+        let mut shape = Plane::preset();
+        shape.material_mut().reflectance = 0.5;
+        *shape.transformation_matrix_mut() =
+            Transform::new(TransformKind::Translate(0.0, -1.0, 0.0));
+        world.objects.push(Box::new(shape));
+
+        let ray = Ray::new(
+            Point::new(0.0, 0.0, -3.0),
+            Vector::new(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+        let raw_intersect =
+            RawIntersect::new(2.0_f64.sqrt(), world.objects.last().unwrap().as_ref(), &ray);
+        let computed_intersect = raw_intersect.precompute();
+        let resulting_colour = Colour::new(0.87677, 0.92436, 0.82918);
+    }
+
+    #[test]
+    fn shade_hit_mutually_reflective_surfaces() {
+        let world = World {
+            objects: vec![
+                Box::new(Plane {
+                    material: Material {
+                        reflectance: 1.0,
+                        ..Material::preset()
+                    },
+                    transform: Transform::new(TransformKind::Translate(0.0, -1.0, 0.0)),
+                }),
+                Box::new(Plane {
+                    material: Material {
+                        reflectance: 1.0,
+                        ..Material::preset()
+                    },
+                    transform: Transform::new(TransformKind::Translate(0.0, 1.0, 0.0)),
+                }),
+            ],
+            lights: vec![Box::new(Light::new(
+                Point::new(0.0, 0.0, 0.0),
+                Colour::new(1.0, 1.0, 1.0),
+            ))],
+        };
+
+        let ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 1.0, 0.0));
+        world.cast_ray(&ray);
     }
 }

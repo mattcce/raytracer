@@ -24,7 +24,8 @@ impl Pattern for Checker {
     }
 
     fn local_colour_at(&self, pattern_point: Point) -> Colour {
-        let floored_sum_of_lengths = (pattern_point.x.floor() + pattern_point.y.floor() + pattern_point.z.floor()) as i32;
+        let floored_sum_of_lengths =
+            (pattern_point.x.floor() + pattern_point.y.floor() + pattern_point.z.floor()) as i32;
         match floored_sum_of_lengths.rem_euclid(2) {
             x if x == 0 => self.colour1,
             x if x == 1 => self.colour2,
@@ -55,9 +56,18 @@ mod tests {
         let colour1 = Colour::new(1.0, 1.0, 1.0);
         let colour2 = Colour::new(0.0, 0.0, 0.0);
         let checker_pattern = Checker::new(colour1, colour2, Transform::default());
-        assert_eq!(checker_pattern.colour_at(Point::new(0.0, 0.0, 0.0)), colour1);
-        assert_eq!(checker_pattern.colour_at(Point::new(0.99, 0.0, 0.0)), colour1);
-        assert_eq!(checker_pattern.colour_at(Point::new(1.01, 0.0, 0.0)), colour2);
+        assert_eq!(
+            checker_pattern.colour_at(Point::new(0.0, 0.0, 0.0)),
+            colour1
+        );
+        assert_eq!(
+            checker_pattern.colour_at(Point::new(0.99, 0.0, 0.0)),
+            colour1
+        );
+        assert_eq!(
+            checker_pattern.colour_at(Point::new(1.01, 0.0, 0.0)),
+            colour2
+        );
     }
 
     #[test]
@@ -65,9 +75,18 @@ mod tests {
         let colour1 = Colour::new(1.0, 1.0, 1.0);
         let colour2 = Colour::new(0.0, 0.0, 0.0);
         let checker_pattern = Checker::new(colour1, colour2, Transform::default());
-        assert_eq!(checker_pattern.colour_at(Point::new(0.0, 0.0, 0.0)), colour1);
-        assert_eq!(checker_pattern.colour_at(Point::new(0.0, 0.99, 0.0)), colour1);
-        assert_eq!(checker_pattern.colour_at(Point::new(0.0, 1.01, 0.0)), colour2);
+        assert_eq!(
+            checker_pattern.colour_at(Point::new(0.0, 0.0, 0.0)),
+            colour1
+        );
+        assert_eq!(
+            checker_pattern.colour_at(Point::new(0.0, 0.99, 0.0)),
+            colour1
+        );
+        assert_eq!(
+            checker_pattern.colour_at(Point::new(0.0, 1.01, 0.0)),
+            colour2
+        );
     }
 
     #[test]
@@ -75,8 +94,17 @@ mod tests {
         let colour1 = Colour::new(1.0, 1.0, 1.0);
         let colour2 = Colour::new(0.0, 0.0, 0.0);
         let checker_pattern = Checker::new(colour1, colour2, Transform::default());
-        assert_eq!(checker_pattern.colour_at(Point::new(0.0, 0.0, 0.0)), colour1);
-        assert_eq!(checker_pattern.colour_at(Point::new(0.0, 0.99, 0.0)), colour1);
-        assert_eq!(checker_pattern.colour_at(Point::new(0.0, 1.01, 0.0)), colour2);
+        assert_eq!(
+            checker_pattern.colour_at(Point::new(0.0, 0.0, 0.0)),
+            colour1
+        );
+        assert_eq!(
+            checker_pattern.colour_at(Point::new(0.0, 0.99, 0.0)),
+            colour1
+        );
+        assert_eq!(
+            checker_pattern.colour_at(Point::new(0.0, 1.01, 0.0)),
+            colour2
+        );
     }
 }
