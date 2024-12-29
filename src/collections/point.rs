@@ -1,5 +1,5 @@
 use super::Vector;
-use std::ops::{Add, Sub};
+use std::ops::{Add, Neg, Sub};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Point {
@@ -50,6 +50,18 @@ impl Sub<Vector> for Point {
     }
 }
 
+impl Neg for Point {
+    type Output = Point;
+
+    fn neg(self) -> Self::Output {
+        Point {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -76,5 +88,12 @@ mod tests {
         let vector = Vector::new(1.0, 2.0, 3.0);
         let resulting_point = Point::new(1.0, 1.0, 1.5);
         assert_eq!(point - vector, resulting_point);
+    }
+
+    #[test]
+    fn negate_point() {
+        let point = Point::new(2.0, 5.0, 9.0);
+        let resulting_point = Point::new(-2.0, -5.0, -9.0);
+        assert_eq!(-point, resulting_point);
     }
 }
