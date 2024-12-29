@@ -150,4 +150,28 @@ mod tests {
         ]);
         assert_eq!(matrix1 * &matrix2, resulting_matrix);
     }
+
+    use super::super::{Point, Vector};
+
+    #[test]
+    fn point_to_matrix() {
+        let point = Point::new(6.0, 4.0, 2.0);
+        let matrix = Matrix {
+            rows: 4,
+            cols: 1,
+            matrix: vec![vec![6.0], vec![4.0], vec![2.0], vec![1.0]],
+        };
+        assert_eq!(Matrix::from(point), matrix);
+    }
+
+    #[test]
+    fn vector_to_matrix() {
+        let vector = Vector::new(6.0, 4.0, 2.0);
+        let matrix = Matrix {
+            rows: 4,
+            cols: 1,
+            matrix: vec![vec![6.0], vec![4.0], vec![2.0], vec![0.0]],
+        };
+        assert_eq!(Matrix::from(vector), matrix);
+    }
 }
