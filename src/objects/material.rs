@@ -2,11 +2,11 @@ use crate::collections::Colour;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Material {
-    colour: Colour,
-    ambient: f64,
-    diffuse: f64,
-    specular: f64,
-    shininess: f64,
+    pub colour: Colour,
+    pub ambient: f64,
+    pub diffuse: f64,
+    pub specular: f64,
+    pub shininess: f64,
 }
 
 impl Default for Material {
