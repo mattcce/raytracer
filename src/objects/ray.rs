@@ -1,7 +1,7 @@
+use super::Sphere;
+use super::{Intersect, Intersections};
+use super::{Transform, Transformable};
 use crate::collections::{Point, Vector};
-use crate::intersections::{Intersect, Intersections};
-use crate::objects::Sphere;
-use crate::transform::{Transform, Transformable};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Ray {
@@ -52,7 +52,7 @@ impl Transformable for Ray {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::transform::TransformKind;
+    use crate::objects::TransformKind;
 
     #[test]
     fn create_ray() {

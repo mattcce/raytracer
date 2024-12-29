@@ -1,4 +1,4 @@
-use crate::collections::*;
+use crate::collections::{Colour, Point};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct PointLight {

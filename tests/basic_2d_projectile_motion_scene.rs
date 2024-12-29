@@ -1,5 +1,4 @@
-use raytracer::canvas;
-use raytracer::collections::*;
+use raytracer::prelude::*;
 
 struct Scene {
     gravity: Vector,
@@ -32,7 +31,7 @@ fn basic_2d_projectile_motion_scene() {
         wind: Vector::new(-0.01, 0.0, 0.0),
         projectile: projectile1,
     };
-    let mut canvas = canvas::Canvas::new(canvas::Width(900), canvas::Height(550));
+    let mut canvas = Canvas::new(canvas::Width(900), canvas::Height(550));
 
     loop {
         let pos_x = match scene1.projectile.position.x.round() {

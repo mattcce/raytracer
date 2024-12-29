@@ -1,4 +1,4 @@
-use crate::objects::Sphere;
+use super::Sphere;
 use std::ops::Index;
 
 #[derive(Clone, Debug, PartialEq)]

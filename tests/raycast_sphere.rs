@@ -1,8 +1,4 @@
-use raytracer::canvas::*;
-use raytracer::collections::*;
-use raytracer::objects::*;
-use raytracer::ray::*;
-use raytracer::transform::{Transform, TransformKind};
+use raytracer::prelude::*;
 
 #[test]
 #[ignore]
@@ -20,7 +16,7 @@ fn raycast_sphere() {
     let source = Point::new(10.0, 10.0, -25.0);
 
     // 100x100 pixel canvas at origin (0.0, 0.0, 25.0) parallel to xy-plane
-    let mut canvas = Canvas::new(Width(25), Height(25));
+    let mut canvas = Canvas::new(canvas::Width(25), canvas::Height(25));
 
     // pixel to draw
     let colour_red = Colour::new(1.0, 0.0, 0.0);
