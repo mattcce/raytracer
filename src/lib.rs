@@ -2,6 +2,7 @@ pub mod canvas;
 pub mod collections;
 pub mod intersections;
 pub mod light;
+pub mod material;
 pub mod objects;
 pub mod ray;
 pub mod transform;
