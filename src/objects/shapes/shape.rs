@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use crate::collections::{Point, Vector};
 use crate::objects::{Intersectable, Intersections, Material, RawIntersect, Ray, Transform, Transformable};
 
-pub trait Shape: LocallyIntersectable + Debug {
+pub trait Shape: Debug {
     fn normal_at(&self, world_point: Point) -> Vector {
         let local_point = world_point.transform(&self.transformation_matrix().invert());
         let local_normal = self.local_normal_at(local_point);
@@ -14,9 +14,6 @@ pub trait Shape: LocallyIntersectable + Debug {
 
     fn material(&self) -> &Material;
     fn transformation_matrix(&self) -> &Transform;
-}
-
-pub trait LocallyIntersectable {
     fn local_normal_at(&self, local_point: Point) -> Vector;
     fn local_intersect(&self, local_ray: &Ray) -> Option<Vec<f64>>;
 }

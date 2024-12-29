@@ -1,6 +1,6 @@
 use crate::collections::{Point, Vector};
 use crate::utils::Preset;
-use crate::objects::{LocallyIntersectable, Shape};
+use crate::objects::{Shape};
 
 use crate::objects::*;
 
@@ -27,18 +27,7 @@ impl Shape for Sphere {
     fn transformation_matrix(&self) -> &Transform {
         &self.transform
     }
-}
 
-impl Preset for Sphere {
-    fn preset() -> Sphere {
-        Sphere {
-            transform: Transform::preset(),
-            material: Material::preset(),
-        }
-    }
-}
-
-impl LocallyIntersectable for Sphere {
     fn local_normal_at(&self, local_point: Point) -> Vector {
         local_point - Point::new(0.0, 0.0, 0.0)
     }
@@ -57,6 +46,15 @@ impl LocallyIntersectable for Sphere {
             let t1 = (-b - sqrt_discriminant) / (2.0 * a);
             let t2 = (-b + sqrt_discriminant) / (2.0 * a);
             Some(vec![t1, t2])
+        }
+    }
+}
+
+impl Preset for Sphere {
+    fn preset() -> Sphere {
+        Sphere {
+            transform: Transform::preset(),
+            material: Material::preset(),
         }
     }
 }

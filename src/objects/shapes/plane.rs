@@ -1,7 +1,7 @@
 use std::default::Default;
 
 use crate::collections::{Point, Vector};
-use crate::objects::{Material, Ray, Transform, Shape, LocallyIntersectable};
+use crate::objects::{Material, Ray, Transform, Shape};
 use crate::utils::{EPSILON, Preset};
 
 #[derive(Default, Clone, Debug, PartialEq)]
@@ -27,18 +27,7 @@ impl Shape for Plane {
     fn transformation_matrix(&self) -> &Transform {
         &self.transform
     }
-}
 
-impl Preset for Plane {
-    fn preset() -> Plane {
-        Plane {
-            transform: Transform::preset(),
-            material: Material::preset(),
-        }
-    }
-}
-
-impl LocallyIntersectable for Plane {
     fn local_normal_at(&self, _local_point: Point) -> Vector {
         Vector::new(0.0, 1.0, 0.0)
     }
@@ -50,6 +39,15 @@ impl LocallyIntersectable for Plane {
 
         let t = -local_ray.origin.y / local_ray.direction.y;
         Some(vec![t])
+    }
+}
+
+impl Preset for Plane {
+    fn preset() -> Plane {
+        Plane {
+            transform: Transform::preset(),
+            material: Material::preset(),
+        }
     }
 }
 
