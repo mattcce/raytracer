@@ -1,5 +1,12 @@
 use super::*;
 use crate::collections::{Colour, Point, Vector};
+use crate::objects::PointLight;
+use crate::scenes::World;
+
+// this entire module needs to be refactored properly - there is really
+// not much reason to perform pre-computations and box them up even into
+// different functions that serve no meaningful purpose by themselves
+// aside to only be immediately pumped into another function.
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Comps<'a> {
@@ -36,10 +43,7 @@ impl<'a> Comps<'a> {
         }
     }
 
-    // This function desperately needs to be refactored; 5 parameters is too many
-    // especially when some of the parameters can already be determined from the
-    // others and can be computed in the body instead.
-    pub fn lighting(
+    fn lighting(
         material: Material,
         light: PointLight,
         illuminated_point: Point,
@@ -67,6 +71,24 @@ impl<'a> Comps<'a> {
             }
         }
         ambient + diffuse + specular
+    }
+
+    fn shade_hit(&self, light: PointLight) -> Colour {
+        Comps::lighting(
+            self.object.material,
+            light,
+            self.point,
+            self.eyev,
+            self.normalv,
+        )
+    }
+
+    pub fn colour_at(world: World, ray: Ray) -> Colour {
+        let intersect = ray.intersect(&world);
+        match intersect.hit() {
+            Some(hit) => Comps::prepare(&hit, ray).shade_hit(world.lights[0]),
+            None => Colour::new(0.0, 0.0, 0.0),
+        }
     }
 }
 
@@ -171,5 +193,61 @@ mod tests {
             Comps::lighting(material, pointlight, position, eyev, normalv),
             resulting_colour
         );
+    }
+
+    // #[test]
+    // fn shade_hit() {
+    //     let world = World::default();
+    //     let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+    //     let shape = &world.objects[0];
+    //     let intersect = Intersect::new(4.0, shape);
+    //     let comps = Comps::prepare(&intersect, ray);
+    //     let resulting_colour = Colour::new(0.38066, 0.47583, 0.28550);
+    //     assert_eq!(comps.shade_hit(world.lights[0]), resulting_colour);
+    // }
+
+    // #[test]
+    // fn shade_hit_inside() {
+    //     let world = World {
+    //         lights: vec![PointLight::new(
+    //             Point::new(0.0, 0.25, 0.0),
+    //             Colour::new(1.0, 1.0, 1.0),
+    //         )],
+    //         ..World::default()
+    //     };
+    //     let ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
+    //     let shape = &world.objects[1];
+    //     let intersect = Intersect::new(0.5, shape);
+    //     let comps = Comps::prepare(&intersect, ray);
+    //     let resulting_colour = Colour::new(0.90498, 0.90498, 0.90498);
+    //     assert_eq!(comps.shade_hit(world.lights[0]), resulting_colour);
+    // }
+
+    #[test]
+    fn ray_misses() {
+        let world = World::default();
+        let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 1.0, 0.0));
+        let resulting_colour = Colour::new(0.0, 0.0, 0.0);
+        assert_eq!(Comps::colour_at(world, ray), resulting_colour);
+    }
+
+    // #[test]
+    // fn ray_hits() {
+    //     let world = World::default();
+    //     let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+    //     let resulting_colour = Colour::new(0.38066, 0.47583, 0.28550);
+    //     assert_eq!(Comps::colour_at(world, ray), resulting_colour);
+    // }
+
+    #[test]
+    fn ray_intersects_behind() {
+        let mut world = World::default();
+        let mut outer = &mut world.objects[0];
+        outer.material.ambient = 1.0;
+        let mut inner = &mut world.objects[1];
+        inner.material.ambient = 1.0;
+        let ray = Ray::new(Point::new(0.0, 0.0, 0.75), Vector::new(0.0, 0.0, -1.0));
+        let resulting_colour = inner.material.colour;
+        assert_eq!(Comps::colour_at(world, ray), resulting_colour);
     }
 }
