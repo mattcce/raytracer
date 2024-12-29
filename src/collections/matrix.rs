@@ -29,10 +29,10 @@ impl Matrix {
     }
 }
 
-impl TryFrom<Vec<Vec<f64>>> for Matrix {
+impl TryFrom<&Vec<Vec<f64>>> for Matrix {
     type Error = MatrixConstructionError;
 
-    fn try_from(vec2d: Vec<Vec<f64>>) -> Result<Matrix, MatrixConstructionError> {
+    fn try_from(vec2d: &Vec<Vec<f64>>) -> Result<Matrix, MatrixConstructionError> {
         let rows = vec2d.len();
         if rows == 0 {
             return Err(MatrixConstructionError::NoRows);
@@ -104,15 +104,15 @@ mod tests {
         let resulting_matrix = Matrix {
             rows: 3,
             cols: 2,
-            matrix: vec![vec![1.0, 2.0], vec![3.0, 4.0], vec![5.0, 6.0]],
+            matrix: array.clone(),
         };
-        assert_eq!(Matrix::try_from(array).unwrap(), resulting_matrix);
+        assert_eq!(Matrix::try_from(&array).unwrap(), resulting_matrix);
     }
 
     #[test]
     fn create_matrix_from_ragged_2d_vec() {
         let array = vec![vec![1.0, 2.0], vec![3.0, 4.0, 5.0], vec![6.0]];
-        let result = Matrix::try_from(array);
+        let result = Matrix::try_from(&array);
         assert_eq!(result, Err(MatrixConstructionError::RaggedVec));
     }
 }
