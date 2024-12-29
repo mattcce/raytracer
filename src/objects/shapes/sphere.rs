@@ -1,10 +1,8 @@
 use crate::collections::{Point, Vector};
-use crate::utils::Preset;
-use crate::objects::{Shape};
-
 use crate::objects::*;
+use crate::utils::Preset;
 
-#[derive(Default, Clone, Debug, PartialEq)]
+#[derive(Default, Debug)]
 pub struct Sphere {
     pub transform: Transform,
     pub material: Material,
@@ -62,16 +60,6 @@ impl Preset for Sphere {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn create_default_sphere() {
-        let sphere = Sphere::default();
-        let resulting_sphere = Sphere {
-            transform: Transform::new(TransformKind::Identity),
-            material: Material::default(),
-        };
-        assert_eq!(sphere, resulting_sphere);
-    }
 
     #[test]
     fn normal_on_unit_sphere() {

@@ -1,6 +1,6 @@
 use crate::collections::*;
 use crate::objects::*;
-use crate::utils::{Preset};
+use crate::utils::Preset;
 
 #[derive(Default, Debug)]
 pub struct World {
@@ -60,7 +60,7 @@ impl Preset for World {
     fn preset() -> World {
         let s1 = Sphere {
             material: Material {
-                colour: Colour::new(0.8, 1.0, 0.6),
+                pattern: Box::new(Solid::new(Colour::new(0.8, 1.0, 0.6))),
                 diffuse: 0.7,
                 specular: 0.2,
                 ..Material::preset()
@@ -83,7 +83,7 @@ impl Preset for World {
 mod tests {
     use super::*;
 
-// #[test]
+    // #[test]
     // fn cast_ray() {
     //     let world = World::preset();
     //     let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
@@ -125,7 +125,7 @@ mod tests {
     fn cast_ray_intersects_behind() {
         let s1 = Sphere {
             material: Material {
-                colour: Colour::new(0.8, 1.0, 0.6),
+                pattern: Box::new(Solid::new(Colour::new(0.8, 1.0, 0.6))),
                 ambient: 1.0,
                 diffuse: 0.7,
                 specular: 0.2,
@@ -144,7 +144,10 @@ mod tests {
         let world = World::new(vec![Box::new(s1), Box::new(s2)], vec![Box::new(light)]);
         let inner = &world.objects[1];
         let ray = Ray::new(Point::new(0.0, 0.0, 0.75), Vector::new(0.0, 0.0, -1.0));
-        let resulting_colour = inner.material().colour;
+        let resulting_colour = inner
+            .material()
+            .pattern
+            .colour_at(Point::new(0.0, 0.0, 0.0));
         assert_eq!(world.cast_ray(&ray), resulting_colour);
     }
 
@@ -183,9 +186,13 @@ mod tests {
             transform: Transform::new(TransformKind::Translate(0.0, 0.0, 10.0)),
             ..Sphere::preset()
         };
+        let s2_clone = Sphere {
+            transform: Transform::new(TransformKind::Translate(0.0, 0.0, 10.0)),
+            ..Sphere::preset()
+        };
         let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let world = World::new(
-            vec![Box::new(s1), Box::new(s2.clone())],
+            vec![Box::new(s1), Box::new(s2_clone)],
             vec![Box::new(light)],
         );
         let ray = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));

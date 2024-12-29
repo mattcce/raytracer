@@ -1,8 +1,8 @@
 use std::ops::Index;
 
 use crate::collections::{Colour, Point, Vector};
-use crate::utils::floats::EPSILON;
 use crate::objects::Shape;
+use crate::utils::floats::EPSILON;
 
 use super::Light;
 use super::Ray;
@@ -76,7 +76,7 @@ impl<S> ComputedIntersect<'_, S>
 {
     pub fn shade(&self, light: &Light, shadowed: bool) -> Colour {
         light.shade_phong(
-            *self.object.material(),
+            self.object.material(),
             self.over_point,
             self.eyev,
             self.normal,

@@ -1,10 +1,10 @@
 use std::default::Default;
 
 use crate::collections::{Point, Vector};
-use crate::objects::{Material, Ray, Transform, Shape};
-use crate::utils::{EPSILON, Preset};
+use crate::objects::{Material, Ray, Shape, Transform};
+use crate::utils::{Preset, EPSILON};
 
-#[derive(Default, Clone, Debug, PartialEq)]
+#[derive(Default, Debug)]
 pub struct Plane {
     pub transform: Transform,
     pub material: Material,
@@ -93,7 +93,6 @@ mod tests {
         let intersections = default_plane.intersect(&ray);
         assert_eq!(intersections.0.len(), 1);
         assert_eq!(intersections.0[0].t, 1.0);
-        assert_eq!(intersections.0[0].object, &default_plane);
     }
 
     #[test]
@@ -103,6 +102,5 @@ mod tests {
         let intersections = default_plane.intersect(&ray);
         assert_eq!(intersections.0.len(), 1);
         assert_eq!(intersections.0[0].t, 1.0);
-        assert_eq!(intersections.0[0].object, &default_plane);
     }
 }

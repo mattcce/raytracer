@@ -1,8 +1,8 @@
 use crate::collections::{Point, Vector};
 use crate::objects::Shape;
 
-use super::{Transform, Transformable};
 use super::Intersections;
+use super::{Transform, Transformable};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Ray {
@@ -20,7 +20,10 @@ impl Ray {
     }
 }
 
-pub trait Intersectable<S> where S: Shape + ?Sized {
+pub trait Intersectable<S>
+    where
+        S: Shape + ?Sized,
+{
     fn intersect<'a>(&'a self, ray: &'a Ray) -> Intersections<'a, S>;
 }
 

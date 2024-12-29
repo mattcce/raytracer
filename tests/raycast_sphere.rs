@@ -29,7 +29,7 @@ fn raycast_scene() {
     let floor = Sphere::new(
         Transform::new(TransformKind::Scale(10.0, 0.01, 10.0)),
         Material {
-            colour: Colour::new(1.0, 0.9, 0.9),
+            pattern: Box::new(Solid::new(Colour::new(1.0, 0.9, 0.9))),
             specular: 0.0,
             ..Material::preset()
         },
@@ -55,7 +55,7 @@ fn raycast_scene() {
     let middle_sphere = Sphere::new(
         Transform::new(TransformKind::Translate(-0.5, 1.0, 0.5)),
         Material {
-            colour: Colour::new(0.1, 1.0, 0.5),
+            pattern: Box::new(Solid::new(Colour::new(0.1, 1.0, 0.5))),
             diffuse: 0.7,
             specular: 0.3,
             ..Material::preset()
@@ -67,7 +67,7 @@ fn raycast_scene() {
             TransformKind::Translate(1.5, 0.5, -0.5),
         ]),
         Material {
-            colour: Colour::new(0.1, 1.0, 0.5),
+            pattern: Box::new(Solid::new(Colour::new(0.1, 1.0, 0.5))),
             diffuse: 0.7,
             specular: 0.3,
             ..Material::preset()
@@ -79,7 +79,7 @@ fn raycast_scene() {
             TransformKind::Translate(-1.5, 0.33, -0.75),
         ]),
         Material {
-            colour: Colour::new(1.0, 0.8, 0.1),
+            pattern: Box::new(Solid::new(Colour::new(1.0, 0.8, 0.1))),
             diffuse: 0.7,
             specular: 0.3,
             ..Material::preset()

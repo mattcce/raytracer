@@ -1,9 +1,9 @@
-use crate::collections::Colour;
+use crate::objects::{Pattern, Solid};
 use crate::utils::Preset;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Material {
-    pub colour: Colour,
+    pub pattern: Box<dyn Pattern>,
     pub ambient: f64,
     pub diffuse: f64,
     pub specular: f64,
@@ -13,7 +13,7 @@ pub struct Material {
 impl Default for Material {
     fn default() -> Material {
         Material {
-            colour: Colour::new(0.0, 0.0, 0.0),
+            pattern: Box::<Solid>::default(),
             ambient: 0.0,
             diffuse: 0.0,
             specular: 0.0,
@@ -25,7 +25,7 @@ impl Default for Material {
 impl Preset for Material {
     fn preset() -> Material {
         Material {
-            colour: Colour::new(1.0, 1.0, 1.0),
+            pattern: Box::new(Solid::preset()),
             ambient: 0.1,
             diffuse: 0.9,
             specular: 0.9,

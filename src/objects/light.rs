@@ -18,13 +18,13 @@ impl Light {
 
     pub fn shade_phong(
         &self,
-        material: Material,
+        material: &Material,
         target: Point,
         eyev: Vector,
         normal: Vector,
         shadowed: bool,
     ) -> Colour {
-        let effective_colour = material.colour * self.intensity;
+        let effective_colour = material.pattern.colour_at(target) * self.intensity;
         let lightv = (self.position - target).normalise();
         let ambient = effective_colour * material.ambient;
         if shadowed {
@@ -79,7 +79,7 @@ mod tests {
         let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let resulting_colour = Colour::new(1.9, 1.9, 1.9);
         assert_eq!(
-            light.shade_phong(material, position, eyev, normalv, false),
+            light.shade_phong(&material, position, eyev, normalv, false),
             resulting_colour
         );
     }
@@ -93,7 +93,7 @@ mod tests {
         let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let resulting_colour = Colour::new(1.0, 1.0, 1.0);
         assert_eq!(
-            light.shade_phong(material, position, eyev, normalv, false),
+            light.shade_phong(&material, position, eyev, normalv, false),
             resulting_colour
         );
     }
@@ -135,7 +135,7 @@ mod tests {
         let light = Light::new(Point::new(0.0, 0.0, 10.0), Colour::new(1.0, 1.0, 1.0));
         let resulting_colour = Colour::new(0.1, 0.1, 0.1);
         assert_eq!(
-            light.shade_phong(material, position, eyev, normalv, false),
+            light.shade_phong(&material, position, eyev, normalv, false),
             resulting_colour
         );
     }
@@ -152,7 +152,7 @@ mod tests {
         let light = Light::new(Point::new(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
         let resulting_colour = Colour::new(0.1, 0.1, 0.1);
         assert_eq!(
-            light.shade_phong(material, position, eyev, normalv, true),
+            light.shade_phong(&material, position, eyev, normalv, true),
             resulting_colour
         );
     }

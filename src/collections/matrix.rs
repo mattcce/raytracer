@@ -170,8 +170,8 @@ impl Matrix {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::{Point, Vector};
+    use super::*;
 
     #[test]
     fn create_new_matrix() {

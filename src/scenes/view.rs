@@ -1,7 +1,7 @@
 use crate::collections::{Angle, Matrix, Point, Vector};
-use crate::objects::{Ray, Transform, Transformable, TransformKind};
-use crate::scenes::{Canvas, Height, Width, World};
+use crate::objects::{Ray, Transform, TransformKind, Transformable};
 use crate::scenes::WriteError;
+use crate::scenes::{Canvas, Height, Width, World};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Orientation(Transform);
