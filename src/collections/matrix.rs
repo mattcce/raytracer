@@ -1,4 +1,3 @@
-use std::convert::TryFrom;
 use std::ops::{Index, IndexMut, Mul};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -6,13 +5,6 @@ pub struct Matrix {
     rows: usize,
     cols: usize,
     matrix: Vec<Vec<f64>>,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum MatrixConstructionError {
-    RaggedVec,
-    NoRows,
-    NoCols,
 }
 
 impl Matrix {
@@ -29,30 +21,22 @@ impl Matrix {
     }
 }
 
-impl TryFrom<&Vec<Vec<f64>>> for Matrix {
-    type Error = MatrixConstructionError;
-
-    fn try_from(vec2d: &Vec<Vec<f64>>) -> Result<Matrix, MatrixConstructionError> {
+impl From<&Vec<Vec<f64>>> for Matrix {
+    fn from(vec2d: &Vec<Vec<f64>>) -> Self {
         let rows = vec2d.len();
-        if rows == 0 {
-            return Err(MatrixConstructionError::NoRows);
-        }
+        assert_ne!(rows, 0);
 
         let mut matrix = Vec::with_capacity(rows);
 
         let cols = vec2d[0].len();
-        if cols == 0 {
-            return Err(MatrixConstructionError::NoCols);
-        }
+        assert_ne!(rows, 0);
 
         for row in vec2d {
-            if row.len() != cols {
-                return Err(MatrixConstructionError::RaggedVec);
-            }
+            assert_eq!(row.len(), cols);
             matrix.push(row.clone());
         }
 
-        Ok(Matrix { rows, cols, matrix })
+        Matrix { rows, cols, matrix }
     }
 }
 
@@ -92,10 +76,9 @@ pub trait Tuple4 {
 }
 
 impl<T: Tuple4> From<T> for Matrix {
-    type Output = Matrix;
-
-    fn from(self: T) -> Self::Output {
-        Matrix::try_from(self.to_tuple4().to_vec())
+    fn from(value: T) -> Self {
+        let tuple: Vec<Vec<f64>> = value.to_tuple4().into_iter().map(|x| vec![x]).collect();
+        Matrix::from(&tuple)
     }
 }
 
@@ -135,39 +118,36 @@ mod tests {
             cols: 2,
             matrix: array.clone(),
         };
-        assert_eq!(Matrix::try_from(&array).unwrap(), resulting_matrix);
+        assert_eq!(Matrix::from(&array), resulting_matrix);
     }
 
     #[test]
+    #[should_panic]
     fn create_matrix_from_ragged_2d_vec() {
         let array = vec![vec![1.0, 2.0], vec![3.0, 4.0, 5.0], vec![6.0]];
-        let result = Matrix::try_from(&array);
-        assert_eq!(result, Err(MatrixConstructionError::RaggedVec));
+        let _result = Matrix::from(&array);
     }
 
     #[test]
     fn mul_two_matrices() {
-        let matrix1 = Matrix::try_from(&vec![
+        let matrix1 = Matrix::from(&vec![
             vec![1.0, 2.0, 3.0, 4.0],
             vec![5.0, 6.0, 7.0, 8.0],
             vec![9.0, 8.0, 7.0, 6.0],
             vec![5.0, 4.0, 3.0, 2.0],
-        ])
-        .unwrap();
-        let matrix2 = Matrix::try_from(&vec![
+        ]);
+        let matrix2 = Matrix::from(&vec![
             vec![-2.0, 1.0, 2.0, 3.0],
             vec![3.0, 2.0, 1.0, -1.0],
             vec![4.0, 3.0, 6.0, 5.0],
             vec![1.0, 2.0, 7.0, 8.0],
-        ])
-        .unwrap();
-        let resulting_matrix = Matrix::try_from(&vec![
+        ]);
+        let resulting_matrix = Matrix::from(&vec![
             vec![20.0, 22.0, 50.0, 48.0],
             vec![44.0, 54.0, 114.0, 108.0],
             vec![40.0, 58.0, 110.0, 102.0],
             vec![16.0, 26.0, 46.0, 42.0],
-        ])
-        .unwrap();
+        ]);
         assert_eq!(matrix1 * &matrix2, resulting_matrix);
     }
 }
