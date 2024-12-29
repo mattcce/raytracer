@@ -3,7 +3,7 @@ use crate::objects::{Material, Ray, Shape, Transform};
 use crate::utils::EPSILON;
 
 #[derive(Debug)]
-pub struct Cylinder {
+pub struct Cone {
     pub transform: Transform,
     pub material: Material,
     y_minimum: f64,
@@ -12,7 +12,7 @@ pub struct Cylinder {
     closed_top: bool,
 }
 
-impl Cylinder {
+impl Cone {
     pub fn new(transform: Transform, material: Material, y_minimum: f64, y_maximum: f64) -> Self {
         let closed_bot = y_minimum > f64::NEG_INFINITY;
         let closed_top = y_maximum < f64::INFINITY;
@@ -40,14 +40,17 @@ impl Cylinder {
             z: dir_z,
         } = direction;
 
-        let a = dir_x.powi(2) + dir_z.powi(2);
+        let a = dir_x.powi(2) - dir_y.powi(2) + dir_z.powi(2);
+        let b = 2.0 * origin_x * dir_x - 2.0 * origin_y * dir_y + 2.0 * origin_z * dir_z;
+        let c = origin_x.powi(2) - origin_y.powi(2) + origin_z.powi(2);
 
         if a.abs() < EPSILON {
-            return vec![];
+            if b.abs() < EPSILON {
+                return vec![];
+            } else {
+                return vec![-c / (2.0 * b)];
+            }
         }
-
-        let b = (2.0 * origin_x * dir_x) + (2.0 * origin_z * dir_z);
-        let c = origin_x.powi(2) + origin_z.powi(2) - 1.0;
 
         let disc = b.powi(2) - 4.0 * a * c;
 
@@ -72,10 +75,10 @@ impl Cylinder {
         t_values
     }
 
-    fn check_cap(local_ray: &Ray, t: f64) -> bool {
+    fn check_cap(local_ray: &Ray, t: f64, y: f64) -> bool {
         let position = local_ray.position(t);
 
-        (position.x.powi(2) + position.z.powi(2)) <= 1.0
+        (position.x.powi(2) + position.z.powi(2)) <= y.powi(2)
     }
 
     fn intersect_caps(&self, local_ray: &Ray) -> Vec<f64> {
@@ -87,14 +90,14 @@ impl Cylinder {
 
         if self.closed_bot {
             let t = (self.y_minimum - local_ray.origin.y) / local_ray.direction.y;
-            if Self::check_cap(local_ray, t) {
+            if Self::check_cap(local_ray, t, self.y_minimum) {
                 t_values.push(t);
             }
         }
 
         if self.closed_top {
             let t = (self.y_maximum - local_ray.origin.y) / local_ray.direction.y;
-            if Self::check_cap(local_ray, t) {
+            if Self::check_cap(local_ray, t, self.y_maximum) {
                 t_values.push(t);
             }
         }
@@ -103,7 +106,7 @@ impl Cylinder {
     }
 }
 
-impl Shape for Cylinder {
+impl Shape for Cone {
     fn material(&self) -> &Material {
         &self.material
     }
@@ -131,7 +134,13 @@ impl Shape for Cylinder {
             }
         }
 
-        Vector::new(local_point.x, 0.0, local_point.z)
+        let y = match dist.sqrt() {
+            y if local_point.y > 0.0 => -y,
+            y if local_point.y <= 0.0 => y,
+            _ => panic!(),
+        };
+
+        Vector::new(local_point.x, y, local_point.z)
     }
 
     fn local_intersect(&self, local_ray: &Ray) -> Vec<f64> {
@@ -144,9 +153,9 @@ impl Shape for Cylinder {
     }
 }
 
-impl Default for Cylinder {
+impl Default for Cone {
     fn default() -> Self {
-        Cylinder {
+        Self {
             transform: Transform::default(),
             material: Material::default(),
             y_maximum: f64::INFINITY,
@@ -161,111 +170,77 @@ impl Default for Cylinder {
 mod tests {
     use super::*;
 
-    #[test]
-    fn ray_misses_cylinder() {
-        let cylinder = Cylinder::default();
-        let test_cases: [(Point, Vector); 3] = [
-            (Point::new(1.0, 0.0, 0.0), Vector::new(0.0, 1.0, 0.0)),
-            (Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 1.0, 0.0)),
-            (Point::new(0.0, 0.0, -5.0), Vector::new(1.0, 1.0, 1.0)),
-        ];
-        for (origin, direction) in test_cases {
-            let ray = Ray::new(origin, direction.normalise());
-            assert_eq!(cylinder.local_intersect(&ray).len(), 0);
-        }
-    }
-
     // #[test]
-    // fn ray_hits_cylinder() {
-    //     let cylinder = Cylinder::default();
+    // fn ray_intersects_cone() {
+    //     let cone = Cone::default();
     //     let test_cases: [(Point, Vector, f64, f64); 3] = [
     //         (
-    //             Point::new(1.0, 0.0, -5.0),
+    //             Point::new(0.0, 0.0, -5.0),
     //             Vector::new(0.0, 0.0, 1.0),
     //             5.0,
     //             5.0,
     //         ),
     //         (
     //             Point::new(0.0, 0.0, -5.0),
-    //             Vector::new(0.0, 0.0, 1.0),
-    //             4.0,
-    //             6.0,
+    //             Vector::new(1.0, 1.0, 1.0),
+    //             8.66025,
+    //             8.66025,
     //         ),
     //         (
-    //             Point::new(0.5, 0.0, -5.0),
-    //             Vector::new(0.1, 1.0, 1.0),
-    //             6.80798,
-    //             7.08872,
+    //             Point::new(1.0, 1.0, -5.0),
+    //             Vector::new(-0.5, -1.0, 1.0),
+    //             4.55006,
+    //             49.44994,
     //         ),
     //     ];
     //     for (origin, direction, t0, t1) in test_cases {
     //         let ray = Ray::new(origin, direction.normalise());
-    //         let t_values = cylinder.local_intersect(&ray);
-    //         assert_eq!(t_values.len(), 2);
+    //         let t_values = cone.local_intersect(&ray);
     //         assert_eq!(t_values[0], t0);
     //         assert_eq!(t_values[1], t1);
     //     }
     // }
 
-    #[test]
-    fn normal_on_cylinder() {
-        let cylinder = Cylinder::default();
-        let test_cases: [(Point, Vector); 4] = [
-            (Point::new(1.0, 0.0, 0.0), Vector::new(1.0, 0.0, 0.0)),
-            (Point::new(0.0, 5.0, -1.0), Vector::new(0.0, 0.0, -1.0)),
-            (Point::new(0.0, -2.0, 1.0), Vector::new(0.0, 0.0, 1.0)),
-            (Point::new(-1.0, 1.0, 0.0), Vector::new(-1.0, 0.0, 0.0)),
-        ];
-        for (point, normal) in test_cases {
-            assert_eq!(cylinder.local_normal_at(point), normal);
-        }
-    }
+    // #[test]
+    // fn ray_intersects_cone_parallel_to_one_half() {
+    //     let cone = Cone::default();
+    //     let ray = Ray::new(
+    //         Point::new(0.0, 0.0, -1.0),
+    //         Vector::new(0.0, 1.0, 1.0).normalise(),
+    //     );
+    //     let t_values = cone.local_intersect(&ray);
+    //     assert_eq!(t_values.len(), 1);
+    //     assert_eq!(t_values[0], 0.35355);
+    // }
 
     #[test]
-    fn intersect_ray_with_constrained_cylinder() {
-        let cylinder = Cylinder::new(Transform::default(), Material::default(), 1.0, 2.0);
-        let test_cases: [(Point, Vector, usize); 5] = [
-            (Point::new(0.0, 3.0, -5.0), Vector::new(0.0, 0.0, 1.0), 0),
-            (Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0), 0),
-            (Point::new(0.0, 2.0, -5.0), Vector::new(0.0, 0.0, 1.0), 0),
-            (Point::new(0.0, 1.0, -5.0), Vector::new(0.0, 0.0, 1.0), 0),
-            (Point::new(0.0, 1.5, -2.0), Vector::new(0.0, 0.0, 1.0), 2),
+    fn ray_intersects_caps() {
+        let cone = Cone::new(Transform::default(), Material::default(), -0.5, 0.5);
+        let test_cases: [(Point, Vector, usize); 3] = [
+            (Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 1.0, 0.0), 0),
+            (Point::new(0.0, 0.0, -0.25), Vector::new(0.0, 1.0, 1.0), 2),
+            (Point::new(0.0, 0.0, -0.25), Vector::new(0.0, 1.0, 0.0), 4),
         ];
         for (origin, direction, count) in test_cases {
             let ray = Ray::new(origin, direction.normalise());
-            assert_eq!(cylinder.local_intersect(&ray).len(), count);
+            let t_values = cone.local_intersect(&ray);
+            assert_eq!(t_values.len(), count);
         }
     }
 
     #[test]
-    fn intersect_caps_of_closed_cylinder() {
-        let cylinder = Cylinder::new(Transform::default(), Material::default(), 1.0, 2.0);
-        let test_cases: [(Point, Vector, usize); 5] = [
-            (Point::new(0.0, 3.0, 0.0), Vector::new(0.0, -1.0, 0.0), 2),
-            (Point::new(0.0, 3.0, -2.0), Vector::new(0.0, -1.0, 2.0), 2),
-            (Point::new(0.0, 4.0, -2.0), Vector::new(0.0, -1.0, 1.0), 2),
-            (Point::new(0.0, 0.0, -2.0), Vector::new(0.0, 1.0, 2.0), 2),
-            (Point::new(0.0, -1.0, -2.0), Vector::new(0.0, 1.0, 1.0), 2),
-        ];
-        for (origin, direction, count) in test_cases {
-            let ray = Ray::new(origin, direction.normalise());
-            assert_eq!(cylinder.local_intersect(&ray).len(), count);
-        }
-    }
-
-    #[test]
-    fn normal_on_capped_cylinder() {
-        let cylinder = Cylinder::new(Transform::default(), Material::default(), 1.0, 2.0);
-        let test_cases: [(Point, Vector); 6] = [
-            (Point::new(0.0, 1.0, 0.0), Vector::new(0.0, -1.0, 0.0)),
-            (Point::new(0.5, 1.0, 0.0), Vector::new(0.0, -1.0, 0.0)),
-            (Point::new(0.0, 1.0, 0.5), Vector::new(0.0, -1.0, 0.0)),
-            (Point::new(0.0, 2.0, 0.0), Vector::new(0.0, 1.0, 0.0)),
-            (Point::new(0.5, 2.0, 0.0), Vector::new(0.0, 1.0, 0.0)),
-            (Point::new(0.0, 2.0, 0.5), Vector::new(0.0, 1.0, 0.0)),
+    fn normal_vector_on_cone() {
+        let cone = Cone::new(Transform::default(), Material::default(), -0.5, 5.0);
+        let test_cases: [(Point, Vector); 3] = [
+            (Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 0.0)),
+            (
+                Point::new(1.0, 1.0, 1.0),
+                Vector::new(1.0, -2.0_f64.sqrt(), 1.0),
+            ),
+            (Point::new(-1.0, -1.0, 0.0), Vector::new(-1.0, 1.0, 0.0)),
         ];
         for (point, normal) in test_cases {
-            assert_eq!(cylinder.local_normal_at(point), normal);
+            assert_eq!(cone.local_normal_at(point), normal);
         }
     }
 }
