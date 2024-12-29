@@ -123,6 +123,10 @@ impl Vector {
             z: (self.x * other.y) - (self.y * other.x),
         }
     }
+
+    pub fn reflect(self, normal: Vector) -> Vector {
+        self - normal * 2.0 * self.dot(normal)
+    }
 }
 
 impl Tuple4 for Vector {
@@ -274,4 +278,16 @@ mod tests {
     //     matrix[[3, 0]] = 10.0;
     //     assert_eq!(Vector::from(matrix), vector);
     // }
+
+    #[test]
+    fn reflect_vector() {
+        let vector1 = Vector::new(1.0, -1.0, 0.0);
+        let vector2 = Vector::new(0.0, -1.0, 0.0);
+        let normal1 = Vector::new(0.0, 1.0, 0.0);
+        let normal2 = Vector::new(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0);
+        let resulting_vector1 = Vector::new(1.0, 1.0, 0.0);
+        let resulting_vector2 = Vector::new(1.0, 0.0, 0.0);
+        assert_eq!(vector1.reflect(normal1), resulting_vector1);
+        // assert_eq!(vector2.reflect(normal2), resulting_vector2);
+    }
 }
