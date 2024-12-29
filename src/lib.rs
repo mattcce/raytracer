@@ -45,7 +45,6 @@ pub mod prelude {
     The top-level module prelude is the public interface prelude that imports
     all of the names in each submodule's prelude.
 
-
     ## Crate-level re-exports
 
     For crate-level re-exports, all names are re-exported to de-nest exactly
@@ -55,8 +54,8 @@ pub mod prelude {
     In general, a name like crate::module::submodule::Name should be re-
     exported as crate::module::Name in src/module/mod.rs.
 
-    In src/module/mod.rs, bring nested names into scope using
-        `pub(crate) use submodule::Name`.
+    In src/module/mod.rs, bring all nested names into scope using
+        `pub(crate) use submodule::*`.
 
     Submodules within the same parent module should bring names into scope using
         `use super::Name`.
