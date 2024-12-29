@@ -22,25 +22,30 @@ impl<'a> Intersect<'a> {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Intersections<'a>(Vec<Intersect<'a>>);
+pub struct Intersections<'a>(pub Vec<Intersect<'a>>);
 
 impl<'a> Intersections<'a> {
+    pub fn new() -> Intersections<'a> {
+        Intersections(vec![])
+    }
+
     pub fn add(&mut self, intersect: Intersect<'a>) {
         for (i, v) in self.0.iter_mut().enumerate() {
             if intersect.t < v.t {
                 self.0.insert(i, intersect);
-                break;
+                return;
             }
         }
+        self.0.push(intersect);
     }
 
-    pub fn hit(&self) -> &Intersect {
+    pub fn hit(&self) -> Option<&Intersect> {
         for v in &self.0 {
             if v.t >= 0.0 {
-                return v;
+                return Some(v);
             }
         }
-        panic!();
+        return None;
     }
 }
 
@@ -77,7 +82,14 @@ mod tests {
     }
 
     #[test]
-    fn create_intersections() {
+    fn create_intersections_empty() {
+        let intersections = Intersections::new();
+        let resulting_intersections = Intersections(vec![]);
+        assert_eq!(intersections, resulting_intersections);
+    }
+
+    #[test]
+    fn create_intersections_from_vec() {
         let sphere = Sphere::default();
         let intersect1 = Intersect::new(1.0, &sphere);
         let intersect2 = Intersect::new(2.0, &sphere);
@@ -117,6 +129,6 @@ mod tests {
         let intersect3 = Intersect::new(3.0, &sphere);
         let intersections = Intersections::from(vec![intersect1, intersect2, intersect3]);
         let resulting_hit = &intersections.0[1];
-        assert!(std::ptr::eq(intersections.hit(), resulting_hit));
+        assert!(std::ptr::eq(intersections.hit().unwrap(), resulting_hit));
     }
 }

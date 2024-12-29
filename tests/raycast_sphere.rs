@@ -31,9 +31,9 @@ fn raycast_sphere() {
                 Point::new(50.0, 50.0, 0.0),
                 Vector::new(x as f64 - 50.0, y as f64 - 50.0, 100.0).normalise(),
             );
-            let intersections_option = ray.intersect(&sphere);
-            let hit = match intersections_option {
-                Some(ref intersections) => intersections.hit(),
+            let intersections = ray.intersect(&sphere);
+            let hit = match intersections.hit() {
+                Some(hit) => hit,
                 None => continue,
             };
             let point = ray.position(hit.t());

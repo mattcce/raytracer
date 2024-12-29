@@ -1,4 +1,4 @@
-use crate::collections::{Colour, Point};
+use crate::collections::*;
 use crate::objects::*;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -40,6 +40,18 @@ impl Default for World {
     }
 }
 
+impl Intersectable<World> for Ray {
+    fn intersect<'a>(&'a self, object: &'a World) -> Intersections<'a> {
+        let mut intersections = Intersections::new();
+        for object in &object.objects {
+            for intersect in self.intersect(object).0 {
+                intersections.add(intersect);
+            }
+        }
+        intersections
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -76,5 +88,22 @@ mod tests {
             lights: vec![light],
         };
         assert_eq!(default_world, resulting_world);
+    }
+
+    #[test]
+    fn intersect_ray_with_world() {
+        let s1 = Sphere {
+            ..Sphere::default()
+        };
+
+        let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let world = World::default();
+        let intersections = ray.intersect(&world);
+        println!("{:?}", intersections.0);
+        assert_eq!(intersections.0.len(), 4);
+        assert_eq!(intersections[0].t(), 4.0);
+        assert_eq!(intersections[1].t(), 4.5);
+        assert_eq!(intersections[2].t(), 5.5);
+        assert_eq!(intersections[3].t(), 6.0);
     }
 }

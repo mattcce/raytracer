@@ -18,7 +18,7 @@ pub(super) mod prelude {
     pub use super::intersections::{Intersect, Intersections};
     pub use super::light::PointLight;
     pub use super::material::Material;
-    pub use super::ray::Ray;
+    pub use super::ray::{Intersectable, Ray};
     pub use super::sphere::Sphere;
     pub use super::transform::{Axis, Transform, TransformKind};
 }
